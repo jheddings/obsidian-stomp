@@ -23,7 +23,7 @@ export class LoggerInstance {
     }
 
     log(level: string, message: string, ...args: any[]): void {
-        console.log(`[${level}] Folderize:${this.name} -- ${message}`, ...args);
+        console.log(`[${level}] STOMP:${this.name} -- ${message}`, ...args);
     }
 
     debug(message: string, ...args: any[]): void {

@@ -1,30 +1,29 @@
 import { Plugin, Notice } from "obsidian";
-import { StompSettingsTab } from "./settings";
+import { StompPluginSettings, StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
-
-interface StompPluginSettings {
-    enableStompCapture: boolean;
-    pageUpEnabled: boolean;
-    pageDownEnabled: boolean;
-    logLevel: LogLevel;
-}
+import { PageScroller } from "./scroller";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
-    enableStompCapture: true,
-    pageUpEnabled: true,
-    pageDownEnabled: true,
+    pageScrollAmount: 50,
+    scrollSpeed: 2.0,
     logLevel: LogLevel.ERROR,
+    showScrollLimitNotices: true,
 };
 
-export default class ObsidianStompPlugin extends Plugin {
+export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
-    private logger = Logger.getLogger("StompPlugin");
+    private logger = Logger.getLogger("main");
+    private scroller: PageScroller;
 
     async onload() {
         await this.loadSettings();
 
-        // Set the global log level based on settings
         Logger.setGlobalLogLevel(this.settings.logLevel);
+
+        this.scroller = new PageScroller(this.app, {
+            pageScrollAmount: this.settings.pageScrollAmount,
+            scrollSpeed: this.settings.scrollSpeed,
+        });
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
@@ -32,30 +31,22 @@ export default class ObsidianStompPlugin extends Plugin {
             this.handleKeyDown(evt);
         });
 
-        this.logger.info("STOMP Pedal Plugin loaded");
+        this.logger.info("Plugin loaded");
     }
 
     onunload() {
-        this.logger.info("STOMP Pedal Plugin unloaded");
+        this.logger.info("Plugin unloaded");
     }
 
     handleKeyDown(evt: KeyboardEvent) {
-        if (!this.settings.enableStompCapture) {
-            return;
-        }
-
-        this.logger.debug(
-            `received event - Key: ${evt.key}, Code: ${evt.code}, Ctrl: ${evt.ctrlKey}, Alt: ${evt.altKey}, Shift: ${evt.shiftKey}`
-        );
-
-        if (evt.key === "PageUp" && this.settings.pageUpEnabled) {
+        if (evt.key === "PageUp") {
             evt.preventDefault();
             evt.stopPropagation();
             this.handlePageUp();
             return;
         }
 
-        if (evt.key === "PageDown" && this.settings.pageDownEnabled) {
+        if (evt.key === "PageDown") {
             evt.preventDefault();
             evt.stopPropagation();
             this.handlePageDown();
@@ -63,14 +54,31 @@ export default class ObsidianStompPlugin extends Plugin {
         }
     }
 
-    handlePageUp() {
-        new Notice("🔺 STOMP: Page Up detected!", 2000);
-        this.logger.info("Page Up command received");
+    async handlePageUp() {
+        this.logger.debug("Page Up pressed - scroll up");
+        try {
+            const hasMoreContent = await this.scroller.scrollUp();
+            if (!hasMoreContent && this.settings.showScrollLimitNotices) {
+                new Notice("🔺 Beginning of Content", 1500);
+            }
+        } catch (error) {
+            this.logger.error("Error during page scroll up:", error);
+            new Notice("❌ STOMP: Scroll error", 2000);
+        }
     }
 
-    handlePageDown() {
-        new Notice("🔻 STOMP: Page Down detected!", 2000);
-        this.logger.info("Page Down command received");
+    async handlePageDown() {
+        this.logger.debug("Page Down pressed - scroll down");
+
+        try {
+            const hasMoreContent = await this.scroller.scrollDown();
+            if (!hasMoreContent && this.settings.showScrollLimitNotices) {
+                new Notice("🔻 End of Content", 1500);
+            }
+        } catch (error) {
+            this.logger.error("Error during page scroll down:", error);
+            new Notice("❌ STOMP: Scroll error", 2000);
+        }
     }
 
     async loadSettings() {
@@ -79,7 +87,11 @@ export default class ObsidianStompPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
-        // Update log level when settings are saved
         Logger.setGlobalLogLevel(this.settings.logLevel);
+
+        this.scroller = new PageScroller(this.app, {
+            pageScrollAmount: this.settings.pageScrollAmount,
+            scrollSpeed: this.settings.scrollSpeed,
+        });
     }
 }

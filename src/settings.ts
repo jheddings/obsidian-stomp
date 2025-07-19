@@ -1,6 +1,13 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import ObsidianStompPlugin from "./main";
 import { LogLevel } from "./logger";
+import ObsidianStompPlugin from "./main";
+
+export interface StompPluginSettings {
+    logLevel: LogLevel;
+    scrollSpeed: number;
+    pageScrollAmount: number;
+    showScrollLimitNotices: boolean;
+}
 
 export class StompSettingsTab extends PluginSettingTab {
     plugin: ObsidianStompPlugin;
@@ -18,14 +25,41 @@ export class StompSettingsTab extends PluginSettingTab {
         containerEl.createEl("h2", { text: "STOMP Pedal Settings" });
 
         new Setting(containerEl)
-            .setName("Enable STOMP capture")
-            .setDesc("Enable or disable STOMP pedal command capture")
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.enableStompCapture).onChange(async (value) => {
-                    this.plugin.settings.enableStompCapture = value;
+            .setName("Scroll Speed")
+            .setDesc("Speed of page scrolling animation (pixels per millisecond)")
+            .addSlider((slider) => {
+                slider.setLimits(0.1, 5.0, 0.1);
+                slider.setValue(this.plugin.settings.scrollSpeed);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    this.plugin.settings.scrollSpeed = value;
                     await this.plugin.saveSettings();
-                })
-            );
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Scroll Limit Notices")
+            .setDesc("Display notices when reaching the beginning or end of content")
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.showScrollLimitNotices);
+                toggle.onChange(async (value) => {
+                    this.plugin.settings.showScrollLimitNotices = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Page Scroll Amount")
+            .setDesc("Pixels to scroll when Page Up/Down is pressed (in Page mode)")
+            .addSlider((slider) => {
+                slider.setLimits(10, 1200, 10);
+                slider.setValue(this.plugin.settings.pageScrollAmount);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    this.plugin.settings.pageScrollAmount = value;
+                    await this.plugin.saveSettings();
+                });
+            });
 
         containerEl.createEl("h3", { text: "Advanced Settings" });
 
