@@ -17,13 +17,6 @@ export default class StompPlugin extends Plugin {
     async onload() {
         await this.loadSettings();
 
-        Logger.setGlobalLogLevel(this.settings.logLevel);
-
-        this.scroller = new PageScroller(this.app, {
-            pageScrollAmount: this.settings.pageScrollAmount,
-            scrollSpeed: this.settings.scrollSpeed,
-        });
-
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
         this.registerDomEvent(
@@ -35,6 +28,18 @@ export default class StompPlugin extends Plugin {
             { capture: true }
         );
 
+        this.addCommand({
+            id: "stomp-scroll-up",
+            name: "Perform scroll up action",
+            callback: () => this.handlePageUp(),
+        });
+
+        this.addCommand({
+            id: "stomp-scroll-down",
+            name: "Perform scroll down action",
+            callback: () => this.handlePageDown(),
+        });
+
         this.logger.info("Plugin loaded");
     }
 
@@ -43,7 +48,7 @@ export default class StompPlugin extends Plugin {
     }
 
     handleKeyDown(evt: KeyboardEvent) {
-        if (evt.key === "PageUp" || (evt.key === "[" && evt.ctrlKey)) {
+        if (evt.key === "PageUp") {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
@@ -51,7 +56,7 @@ export default class StompPlugin extends Plugin {
             return false;
         }
 
-        if (evt.key === "PageDown" || (evt.key === "]" && evt.ctrlKey)) {
+        if (evt.key === "PageDown") {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
@@ -83,10 +88,18 @@ export default class StompPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+        Logger.setGlobalLogLevel(this.settings.logLevel);
+
+        this.scroller = new PageScroller(this.app, {
+            pageScrollAmount: this.settings.pageScrollAmount,
+            scrollSpeed: this.settings.scrollSpeed,
+        });
     }
 
     async saveSettings() {
         await this.saveData(this.settings);
+
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
         this.scroller = new PageScroller(this.app, {
