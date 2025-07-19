@@ -3,63 +3,107 @@ import { App, Editor, MarkdownView } from "obsidian";
 
 export interface ScrollerOptions {
     pageScrollAmount: number;
-    scrollSpeed: number;
+    scrollSpeed: number; // pixels per second - used for both animation speed and auto-scroll rate
 }
 
 export abstract class ViewScroller {
-    constructor(protected app: App) {}
+    protected logger: LoggerInstance;
+    private isAnimating: boolean = false;
 
-    abstract scrollUp(): Promise<boolean>;
+    private static readonly ANIMATION_FRAME_TIME = 16 / 1000;
+    private static readonly ANIMATION_FRAME_THRESHOLD = 5;
+    private static readonly ANIMATION_BACKOFF_FACTOR = 3;
 
-    abstract scrollDown(): Promise<boolean>;
+    constructor(protected app: App) {
+        this.logger = Logger.getLogger("ViewScroller");
+    }
 
-    protected async scrollTo(
+    abstract scrollUp(): Promise<void>;
+
+    abstract scrollDown(): Promise<void>;
+
+    protected directScroll(editor: Editor, targetTop: number) {
+        const { top, left } = editor.getScrollInfo();
+        const clampedTarget = Math.max(targetTop, 0);
+
+        this.logger.debug(`Scrolling from ${top} to ${clampedTarget}`);
+
+        editor.scrollTo(left, clampedTarget);
+
+        const { top: newTop } = editor.getScrollInfo();
+
+        if (newTop === 0) {
+            this.logger.debug("Reached top of document");
+        } else if (newTop === top) {
+            this.logger.debug("Reached end of document");
+        }
+    }
+
+    protected async animatedScroll(
         editor: Editor,
-        targetTop: number,
+        scrollAmount: number,
         scrollSpeed: number
     ): Promise<void> {
+        if (this.isAnimating) {
+            this.logger.debug("Animation in progress; aborting");
+            return;
+        }
+
+        const startPosition = editor.getScrollInfo().top;
+        const targetPosition = startPosition + scrollAmount;
+
+        // If the scroll amount is below threshold, just do a direct scroll
+        if (Math.abs(scrollAmount) <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
+            this.directScroll(editor, targetPosition);
+            return;
+        }
+
+        this.isAnimating = true;
+        const startTime = performance.now();
+
         return new Promise((resolve) => {
-            const { top: currentTop, left } = editor.getScrollInfo();
-            const distance = targetTop - currentTop;
-
-            if (Math.abs(distance) < 10) {
-                editor.scrollTo(left, targetTop);
-                resolve();
-                return;
-            }
-
-            const startTime = performance.now();
-            const duration = Math.min(500, Math.abs(distance) / scrollSpeed);
-
             const animate = (currentTime: number) => {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
+                const currentPosition = editor.getScrollInfo().top;
+                const remainingDistance = targetPosition - currentPosition;
 
-                // Easing function for smooth animation
-                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-
-                const currentPosition = currentTop + distance * easeOutCubic;
-                editor.scrollTo(left, currentPosition);
-
-                // Check if we've reached the target or if scrolling has stopped
-                const newScrollInfo = editor.getScrollInfo();
-                const reachedTarget = progress >= 1;
-                const scrollStopped = Math.abs(newScrollInfo.top - currentPosition) > 5; // Tolerance for boundary hit
-
-                if (reachedTarget || scrollStopped) {
+                if (Math.abs(remainingDistance) <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
+                    this.directScroll(editor, targetPosition);
+                    this.isAnimating = false;
                     resolve();
-                } else {
-                    requestAnimationFrame(animate);
+
+                    const totalTime = (currentTime - startTime) / 1000;
+                    this.logger.debug(`Animation complete in ${totalTime} seconds`);
+
+                    return;
                 }
+
+                // Calculate base movement for this frame
+                const baseMovement = scrollSpeed * ViewScroller.ANIMATION_FRAME_TIME;
+
+                // Apply easing: reduce speed as we get closer to target
+                const distanceRatio = Math.abs(remainingDistance) / Math.abs(scrollAmount);
+                const easingFactor = Math.pow(
+                    distanceRatio,
+                    1 / ViewScroller.ANIMATION_BACKOFF_FACTOR
+                );
+
+                // Calculate actual movement for this frame
+                const movement = baseMovement * easingFactor * Math.sign(remainingDistance);
+                const newPosition = currentPosition + movement;
+
+                this.directScroll(editor, newPosition);
+
+                // continue animation
+                requestAnimationFrame(animate);
             };
 
+            // start the animation
             requestAnimationFrame(animate);
         });
     }
 }
 
 export class PageScroller extends ViewScroller {
-    private logger: LoggerInstance;
     private options: ScrollerOptions;
 
     constructor(app: App, options: ScrollerOptions) {
@@ -68,47 +112,31 @@ export class PageScroller extends ViewScroller {
         this.logger = Logger.getLogger("PageScroller");
     }
 
-    async scrollUp(): Promise<boolean> {
-        return await this.performScroll(-1);
+    async scrollUp(): Promise<void> {
+        await this.performScroll(-1);
     }
 
-    async scrollDown(): Promise<boolean> {
-        return await this.performScroll(1);
+    async scrollDown(): Promise<void> {
+        await this.performScroll(1);
     }
 
-    private async performScroll(direction: number): Promise<boolean> {
+    private async performScroll(direction: number): Promise<void> {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         this.logger.debug(`Scrolling ${direction > 0 ? "down" : "up"} on: ${activeView}`);
 
-        if (activeView) {
-            const editor = activeView.editor;
-            return await this.scrollEditor(editor, direction);
-        } else {
-            this.logger.warn(
-                "No active markdown view found - page scroll only works in markdown views"
-            );
-            return false;
+        if (!activeView) {
+            this.logger.warn("No active markdown view found");
+            return;
         }
-    }
 
-    private async scrollEditor(editor: Editor, direction: number): Promise<boolean> {
+        const editor = activeView.editor;
+
         const { top, left } = editor.getScrollInfo();
         this.logger.debug(`Current scroll position: top=${top}, left=${left}`);
 
-        const targetTop = top + direction * this.options.pageScrollAmount;
-        this.logger.debug(`Target scroll position: top=${targetTop}`);
+        const scrollAmount = direction * this.options.pageScrollAmount;
+        this.logger.debug(`Scroll amount: ${scrollAmount}, target position: ${top + scrollAmount}`);
 
-        await this.scrollTo(editor, targetTop, this.options.scrollSpeed);
-
-        // check if we actually scrolled or hit a limit
-        const newScrollInfo = editor.getScrollInfo();
-        const actuallyScrolled = Math.abs(newScrollInfo.top - top) > 5;
-
-        if (!actuallyScrolled) {
-            this.logger.debug("No movement detected");
-            return false;
-        }
-
-        return true;
+        await this.animatedScroll(editor, scrollAmount, this.options.scrollSpeed);
     }
 }

@@ -7,7 +7,6 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
     pageScrollAmount: 50,
     scrollSpeed: 2.0,
     logLevel: LogLevel.ERROR,
-    showScrollLimitNotices: true,
 };
 
 export default class StompPlugin extends Plugin {
@@ -27,9 +26,14 @@ export default class StompPlugin extends Plugin {
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
-            this.handleKeyDown(evt);
-        });
+        this.registerDomEvent(
+            document,
+            "keydown",
+            (evt: KeyboardEvent) => {
+                this.handleKeyDown(evt);
+            },
+            { capture: true }
+        );
 
         this.logger.info("Plugin loaded");
     }
@@ -39,28 +43,27 @@ export default class StompPlugin extends Plugin {
     }
 
     handleKeyDown(evt: KeyboardEvent) {
-        if (evt.key === "PageUp") {
+        if (evt.key === "PageUp" || (evt.key === "[" && evt.ctrlKey)) {
             evt.preventDefault();
             evt.stopPropagation();
+            evt.stopImmediatePropagation();
             this.handlePageUp();
-            return;
+            return false;
         }
 
-        if (evt.key === "PageDown") {
+        if (evt.key === "PageDown" || (evt.key === "]" && evt.ctrlKey)) {
             evt.preventDefault();
             evt.stopPropagation();
+            evt.stopImmediatePropagation();
             this.handlePageDown();
-            return;
+            return false;
         }
     }
 
     async handlePageUp() {
-        this.logger.debug("Page Up pressed - scroll up");
+        this.logger.info("Page Up pressed - scroll up");
         try {
-            const hasMoreContent = await this.scroller.scrollUp();
-            if (!hasMoreContent && this.settings.showScrollLimitNotices) {
-                new Notice("🔺 Beginning of Content", 1500);
-            }
+            await this.scroller.scrollUp();
         } catch (error) {
             this.logger.error("Error during page scroll up:", error);
             new Notice("❌ STOMP: Scroll error", 2000);
@@ -68,13 +71,10 @@ export default class StompPlugin extends Plugin {
     }
 
     async handlePageDown() {
-        this.logger.debug("Page Down pressed - scroll down");
+        this.logger.info("Page Down pressed - scroll down");
 
         try {
-            const hasMoreContent = await this.scroller.scrollDown();
-            if (!hasMoreContent && this.settings.showScrollLimitNotices) {
-                new Notice("🔻 End of Content", 1500);
-            }
+            await this.scroller.scrollDown();
         } catch (error) {
             this.logger.error("Error during page scroll down:", error);
             new Notice("❌ STOMP: Scroll error", 2000);

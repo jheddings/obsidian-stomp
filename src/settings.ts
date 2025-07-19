@@ -6,7 +6,6 @@ export interface StompPluginSettings {
     logLevel: LogLevel;
     scrollSpeed: number;
     pageScrollAmount: number;
-    showScrollLimitNotices: boolean;
 }
 
 export class StompSettingsTab extends PluginSettingTab {
@@ -26,24 +25,13 @@ export class StompSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Scroll Speed")
-            .setDesc("Speed of page scrolling animation (pixels per millisecond)")
+            .setDesc("Scrolling speed in pixels per second. Higher values = faster scrolling.")
             .addSlider((slider) => {
-                slider.setLimits(0.1, 5.0, 0.1);
+                slider.setLimits(10, 2000, 10);
                 slider.setValue(this.plugin.settings.scrollSpeed);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
                     this.plugin.settings.scrollSpeed = value;
-                    await this.plugin.saveSettings();
-                });
-            });
-
-        new Setting(containerEl)
-            .setName("Scroll Limit Notices")
-            .setDesc("Display notices when reaching the beginning or end of content")
-            .addToggle((toggle) => {
-                toggle.setValue(this.plugin.settings.showScrollLimitNotices);
-                toggle.onChange(async (value) => {
-                    this.plugin.settings.showScrollLimitNotices = value;
                     await this.plugin.saveSettings();
                 });
             });
