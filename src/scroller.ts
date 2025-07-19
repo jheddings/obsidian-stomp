@@ -50,37 +50,35 @@ export abstract class ViewScroller {
         }
 
         const { top: currentTop } = editor.getScrollInfo();
-        const distance = currentTop - targetTop;
+        const distance = Math.abs(targetTop - currentTop);
 
-        if (Math.abs(distance) < ViewScroller.ANIMATION_FRAME_THRESHOLD) {
+        if (distance < ViewScroller.ANIMATION_FRAME_THRESHOLD) {
             this.directScroll(editor, targetTop);
-            this.isAnimating = false;
             return;
         }
 
-        // calculate the total time for the scroll animation
-        const totalTime = Math.abs(distance) / scrollSpeed;
+        // calculate frame variables
         const frameTime = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
-        const totalFrames = Math.ceil(totalTime * ViewScroller.ANIMATION_FRAME_RATE);
+        const stepSize = scrollSpeed * (frameTime / 1000);
+        const direction = targetTop > currentTop ? 1 : -1;
+        const pixelsPerFrame = direction * stepSize;
 
-        let currentFrame = 0;
+        let currentPosition = currentTop;
         this.isAnimating = true;
 
-        this.logger.debug(
-            `Starting scroll: distance=${distance}px, time=${totalTime}s, frames=${totalFrames}`
-        );
+        this.logger.debug(`Starting scroll: ${currentTop} → ${targetTop} (${distance}px)`);
 
         const animate = () => {
             if (!this.isAnimating) return;
 
-            currentFrame++;
-            const progress = currentFrame / totalFrames;
+            currentPosition += pixelsPerFrame;
 
-            if (progress >= 1) {
+            const remaining = Math.abs(targetTop - currentPosition);
+
+            if (remaining <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
                 this.directScroll(editor, targetTop);
                 this.isAnimating = false;
             } else {
-                const currentPosition = currentTop - distance * progress;
                 this.directScroll(editor, currentPosition);
                 setTimeout(animate, frameTime);
             }
@@ -109,7 +107,6 @@ export class PageScroller extends ViewScroller {
 
     private async performScroll(direction: number): Promise<void> {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        this.logger.debug(`Scrolling ${direction > 0 ? "down" : "up"} on: ${activeView}`);
 
         if (!activeView) {
             this.logger.warn("No active markdown view found");
