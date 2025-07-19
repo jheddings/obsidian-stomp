@@ -4,8 +4,7 @@ A simple Obsidian plugin that enables hands-free reading using foot pedals. STOM
 
 ## Purpose
 
-This plugin was created for readers who want to navigate through long documents hands-free, particularly useful when:
-
+- Using Obsidian for [chord sheets](https://github.com/jheddings/obsidian-chopro)
 - Taking notes while reading physical books or papers
 - Keeping hands free for other tasks while reviewing content
 - Using accessibility devices that map to PageUp/PageDown keys
