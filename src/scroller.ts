@@ -3,7 +3,7 @@ import { App, Editor, MarkdownView } from "obsidian";
 
 export interface ScrollerOptions {
     pageScrollAmount: number;
-    scrollSpeed: number;
+    pageScrollDuration: number;
 }
 
 export abstract class ViewScroller {
@@ -42,7 +42,7 @@ export abstract class ViewScroller {
     protected async animatedScroll(
         editor: Editor,
         targetTop: number,
-        scrollSpeed: number
+        pageScrollDuration: number
     ): Promise<void> {
         if (this.isAnimating) {
             this.logger.debug("Animation in progress; aborting");
@@ -59,7 +59,8 @@ export abstract class ViewScroller {
 
         // calculate frame variables
         const frameTime = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
-        const stepSize = scrollSpeed * (frameTime / 1000);
+        const totalFrames = Math.ceil((pageScrollDuration * 1000) / frameTime);
+        const stepSize = distance / totalFrames;
         const direction = targetTop > currentTop ? 1 : -1;
         const pixelsPerFrame = direction * stepSize;
 
@@ -122,6 +123,6 @@ export class PageScroller extends ViewScroller {
         const targetTop = top + scrollAmount;
         this.logger.debug(`Scroll amount: ${scrollAmount}, target position: ${targetTop}`);
 
-        await this.animatedScroll(editor, targetTop, this.options.scrollSpeed);
+        await this.animatedScroll(editor, targetTop, this.options.pageScrollDuration);
     }
 }

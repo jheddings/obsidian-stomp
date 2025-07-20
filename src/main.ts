@@ -4,8 +4,8 @@ import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
-    pageScrollAmount: 50,
-    scrollSpeed: 2.0,
+    pageScrollDuration: 0.25,
+    pageScrollAmount: 500,
     logLevel: LogLevel.ERROR,
 };
 
@@ -93,7 +93,7 @@ export default class StompPlugin extends Plugin {
 
         this.scroller = new PageScroller(this.app, {
             pageScrollAmount: this.settings.pageScrollAmount,
-            scrollSpeed: this.settings.scrollSpeed,
+            pageScrollDuration: this.settings.pageScrollDuration,
         });
     }
 
@@ -104,7 +104,7 @@ export default class StompPlugin extends Plugin {
 
         this.scroller = new PageScroller(this.app, {
             pageScrollAmount: this.settings.pageScrollAmount,
-            scrollSpeed: this.settings.scrollSpeed,
+            pageScrollDuration: this.settings.pageScrollDuration,
         });
     }
 }
