@@ -4,7 +4,7 @@ import ObsidianStompPlugin from "./main";
 
 export interface StompPluginSettings {
     logLevel: LogLevel;
-    scrollSpeed: number;
+    pageScrollDuration: number;
     pageScrollAmount: number;
 }
 
@@ -24,14 +24,16 @@ export class StompSettingsTab extends PluginSettingTab {
         containerEl.createEl("h2", { text: "STOMP Pedal Settings" });
 
         new Setting(containerEl)
-            .setName("Scroll Speed")
-            .setDesc("Scrolling speed in pixels per second. Higher values = faster scrolling.")
+            .setName("Page Scroll Duration")
+            .setDesc(
+                "Duration of page scroll animation in seconds. Lower values = faster scrolling."
+            )
             .addSlider((slider) => {
-                slider.setLimits(10, 2000, 10);
-                slider.setValue(this.plugin.settings.scrollSpeed);
+                slider.setLimits(0.1, 2.0, 0.05);
+                slider.setValue(this.plugin.settings.pageScrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this.plugin.settings.scrollSpeed = value;
+                    this.plugin.settings.pageScrollDuration = value;
                     await this.plugin.saveSettings();
                 });
             });
