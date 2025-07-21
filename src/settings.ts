@@ -21,7 +21,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "STOMP Pedal Settings" });
+        new Setting(this.containerEl).setName("Page Scrolling").setHeading();
 
         new Setting(containerEl)
             .setName("Page Scroll Duration")
@@ -51,7 +51,7 @@ export class StompSettingsTab extends PluginSettingTab {
                 });
             });
 
-        containerEl.createEl("h3", { text: "Advanced Settings" });
+        new Setting(this.containerEl).setName("Advanced Settings").setHeading();
 
         new Setting(containerEl)
             .setName("Log Level")
@@ -68,7 +68,7 @@ export class StompSettingsTab extends PluginSettingTab {
                 });
             });
 
-        containerEl.createEl("h3", { text: "Key Capture Test" });
+        new Setting(this.containerEl).setName("Key Capture Test").setHeading();
 
         const testArea = containerEl.createEl("div", {
             attr: {
@@ -89,7 +89,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         const testInput = testArea.createEl("input", {
             type: "text",
-            placeholder: "Click here and press your STOMP pedal buttons",
+            placeholder: "Click here and press your pedal buttons",
             attr: {
                 style: "width: 100%; padding: 8px; margin-top: 8px;",
             },
