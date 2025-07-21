@@ -7,7 +7,10 @@ export interface ScrollerOptions {
 }
 
 export abstract class ViewScroller {
+    private static readonly ANIMATION_FRAME_THRESHOLD = 5;
+
     protected logger: LoggerInstance;
+    private animationId: number | null = null;
 
     constructor(protected app: App) {
         this.logger = Logger.getLogger("ViewScroller");
@@ -16,6 +19,73 @@ export abstract class ViewScroller {
     abstract scrollUp(): Promise<void>;
 
     abstract scrollDown(): Promise<void>;
+
+    stopScroll(): void {
+        if (this.animationId !== null) {
+            cancelAnimationFrame(this.animationId);
+            this.logger.debug(`Animation stopped [${this.animationId}]`);
+            this.animationId = null;
+        }
+    }
+
+    protected startScroll(
+        editor: Editor,
+        targetTop: number,
+        scrollFunction: (currentPosition: number) => number
+    ): Promise<void> {
+        this.stopScroll();
+
+        const startingTop = editor.getScrollInfo().top;
+        const distance = Math.abs(targetTop - startingTop);
+
+        if (distance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
+            this.directScroll(editor, targetTop);
+            return;
+        }
+
+        return new Promise((resolve) => {
+            const startTop = editor.getScrollInfo().top;
+            const clampedTop = Math.max(targetTop, 0);
+
+            this.logger.debug(
+                `Starting animation [${this.animationId}] :: ${startTop} -> ${clampedTop}`
+            );
+
+            let currentPosition = startTop;
+
+            const animate = () => {
+                const nextPosition = scrollFunction(currentPosition);
+                const remainingDistance = Math.abs(clampedTop - nextPosition);
+
+                this.logger.debug(
+                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
+                );
+
+                if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
+                    this.stopScroll();
+                    this.directScroll(editor, clampedTop);
+                    resolve();
+                    return;
+                }
+
+                currentPosition = nextPosition;
+                this.directScroll(editor, currentPosition);
+
+                const actualPosition = editor.getScrollInfo().top;
+                if (actualPosition === clampedTop) {
+                    this.logger.debug(`Animation completed [${this.animationId}]`);
+                    this.animationId = null;
+                    resolve();
+                } else {
+                    this.animationId = requestAnimationFrame(animate);
+                    this.logger.debug(`Preparing next frame -- ${this.animationId}`);
+                }
+            };
+
+            this.animationId = requestAnimationFrame(animate);
+            this.logger.debug(`Animation started [${this.animationId}]`);
+        });
+    }
 
     protected directScroll(editor: Editor, targetTop: number) {
         const { top, left } = editor.getScrollInfo();
@@ -38,10 +108,7 @@ export abstract class ViewScroller {
 export class PageScroller extends ViewScroller {
     private options: ScrollerOptions;
 
-    private isScrolling: boolean = false;
-
     private static readonly ANIMATION_FRAME_RATE = 60;
-    private static readonly ANIMATION_FRAME_THRESHOLD = 5;
 
     constructor(app: App, options: ScrollerOptions) {
         super(app);
@@ -65,45 +132,22 @@ export class PageScroller extends ViewScroller {
             return;
         }
 
-        if (this.isScrolling) {
-            this.logger.debug("Scrolling in progress; aborting");
-            return;
-        }
-
         const editor = activeView.editor;
         const currentTop = editor.getScrollInfo().top;
         const targetTop = currentTop + direction * this.options.pageScrollAmount;
         const distance = Math.abs(targetTop - currentTop);
 
-        if (distance < PageScroller.ANIMATION_FRAME_THRESHOLD) {
-            this.directScroll(editor, targetTop);
-            return;
-        }
+        this.logger.debug(`Scrolling ${distance}px from ${currentTop} to ${targetTop}`);
 
         const frameTime = 1000 / PageScroller.ANIMATION_FRAME_RATE;
         const pixelsPerFrame =
             (direction * distance) /
             Math.ceil((this.options.pageScrollDuration * 1000) / frameTime);
 
-        let currentPosition = currentTop;
-        this.isScrolling = true;
+        this.logger.debug(`Frame Info: ${frameTime}ms; ${pixelsPerFrame}px`);
 
-        this.logger.debug(`Scrolling ${distance}px from ${currentTop} to ${targetTop}`);
-
-        const animate = () => {
-            if (!this.isScrolling) return;
-
-            currentPosition += pixelsPerFrame;
-
-            if (Math.abs(targetTop - currentPosition) <= PageScroller.ANIMATION_FRAME_THRESHOLD) {
-                this.directScroll(editor, targetTop);
-                this.isScrolling = false;
-            } else {
-                this.directScroll(editor, currentPosition);
-                setTimeout(animate, frameTime);
-            }
-        };
-
-        animate();
+        await this.startScroll(editor, targetTop, (currentPosition: number) => {
+            return currentPosition + pixelsPerFrame;
+        });
     }
 }
