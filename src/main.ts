@@ -29,14 +29,14 @@ export default class StompPlugin extends Plugin {
         );
 
         this.addCommand({
-            id: "stomp-scroll-up",
-            name: "Perform scroll up action",
+            id: "stomp-page-scroll-up",
+            name: "Scroll page up",
             callback: () => this.handlePageUp(),
         });
 
         this.addCommand({
-            id: "stomp-scroll-down",
-            name: "Perform scroll down action",
+            id: "stomp-page-scroll-down",
+            name: "Scroll page down",
             callback: () => this.handlePageDown(),
         });
 
