@@ -31,13 +31,13 @@ export default class StompPlugin extends Plugin {
         this.addCommand({
             id: "stomp-page-scroll-up",
             name: "Scroll page up",
-            callback: () => this.handlePageUp(),
+            callback: () => this.scrollPageUp(),
         });
 
         this.addCommand({
             id: "stomp-page-scroll-down",
             name: "Scroll page down",
-            callback: () => this.handlePageDown(),
+            callback: () => this.scrollPageDown(),
         });
 
         this.logger.info("Plugin loaded");
@@ -52,7 +52,7 @@ export default class StompPlugin extends Plugin {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
-            this.handlePageUp();
+            this.scrollPageUp();
             return false;
         }
 
@@ -60,12 +60,12 @@ export default class StompPlugin extends Plugin {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
-            this.handlePageDown();
+            this.scrollPageDown();
             return false;
         }
     }
 
-    async handlePageUp() {
+    async scrollPageUp() {
         this.logger.info("Page Up pressed - scroll up");
         try {
             await this.scroller.scrollUp();
@@ -75,7 +75,7 @@ export default class StompPlugin extends Plugin {
         }
     }
 
-    async handlePageDown() {
+    async scrollPageDown() {
         this.logger.info("Page Down pressed - scroll down");
 
         try {
