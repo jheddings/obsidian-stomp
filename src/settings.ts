@@ -14,7 +14,6 @@ export interface StompPluginSettings {
     commandBindings: KeyBinding[];
 }
 
-// Available keys for binding commands
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
     PageDown: "Page Down",
@@ -27,8 +26,6 @@ export const AVAILABLE_KEYS = {
     Home: "Home",
     End: "End",
 } as const;
-
-export type AvailableKey = keyof typeof AVAILABLE_KEYS;
 
 export function getCommandBinding(
     settings: StompPluginSettings,
@@ -105,7 +102,6 @@ export class StompSettingsTab extends PluginSettingTab {
             });
         });
 
-        // Display content based on active tab
         const contentEl = containerEl.createEl("div");
 
         switch (this.activeTab) {
@@ -122,74 +118,37 @@ export class StompSettingsTab extends PluginSettingTab {
     }
 
     private displayKeyBindingsTab(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName("Key Bindings").setHeading();
+        new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
-        new Setting(containerEl).setDesc(
-            "Configure key bindings for plugin commands. Choose from the available keys to assign to each command."
-        );
-
-        // Display all available commands with their key bindings
         this.plugin.listCommands().forEach((command) => {
-            this.createCommandBindingSetting(containerEl, command.id, command.name);
-        });
-    }
+            const currentBinding = getCommandBinding(this.plugin.settings, command.id);
+            const currentKey = currentBinding?.key || "";
 
-    private createCommandBindingSetting(
-        containerEl: HTMLElement,
-        commandId: string,
-        commandName: string
-    ): void {
-        const currentBinding = getCommandBinding(this.plugin.settings, commandId);
-        const currentKey = currentBinding?.key || "";
+            const setting = new Setting(containerEl)
+                .setName(command.name)
+                .setDesc(`Command: ${command.id}`);
 
-        const setting = new Setting(containerEl)
-            .setName(commandName)
-            .setDesc(`Command: ${commandId}`);
+            setting.addDropdown((dropdown) => {
+                dropdown.addOption("", "None");
 
-        // Key selection dropdown
-        setting.addDropdown((dropdown) => {
-            // Add "None" option
-            dropdown.addOption("", "None");
+                Object.entries(AVAILABLE_KEYS).forEach(([key, displayName]) => {
+                    dropdown.addOption(key, displayName);
+                });
 
-            // Add all available keys
-            Object.entries(AVAILABLE_KEYS).forEach(([key, displayName]) => {
-                dropdown.addOption(key, displayName);
-            });
-
-            dropdown.setValue(currentKey);
-            dropdown.onChange(async (value) => {
-                const newKey = value || null;
-                setCommandBinding(this.plugin.settings, commandId, newKey);
-                await this.plugin.saveSettings();
-                this.display(); // Refresh to show/hide conflicts
+                dropdown.setValue(currentKey);
+                dropdown.onChange(async (value) => {
+                    const newKey = value || null;
+                    setCommandBinding(this.plugin.settings, command.id, newKey);
+                    await this.plugin.saveSettings();
+                });
             });
         });
-
-        // Show conflict warning if this key is used by another command
-        if (currentKey) {
-            const conflictingBinding = this.plugin.settings.commandBindings.find(
-                (binding) => binding.key === currentKey && binding.commandId !== commandId
-            );
-            if (conflictingBinding) {
-                const conflictCommand = this.plugin
-                    .listCommands()
-                    .find((cmd) => cmd.id === conflictingBinding.commandId);
-                const keyDisplayName = AVAILABLE_KEYS[currentKey as AvailableKey] || currentKey;
-                setting.setDesc(
-                    `⚠️ Key "${keyDisplayName}" is also assigned to: ${conflictCommand?.name || conflictingBinding.commandId}`
-                );
-            }
-        }
     }
 
     private displayScrollingTab(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName("Page Scrolling").setHeading();
-
         new Setting(containerEl)
             .setName("Page Scroll Duration")
-            .setDesc(
-                "Duration of page scroll animation in seconds. Lower values = faster scrolling."
-            )
+            .setDesc("Duration of page scroll animation in seconds. Lower values = faster.")
             .addSlider((slider) => {
                 slider.setLimits(0.1, 2.0, 0.05);
                 slider.setValue(this.plugin.settings.pageScrollDuration);
@@ -202,7 +161,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Page Scroll Amount")
-            .setDesc("Pixels to scroll when Page Up/Down commands are executed")
+            .setDesc("Pixels to scroll when page commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(10, 1200, 10);
                 slider.setValue(this.plugin.settings.pageScrollAmount);
@@ -215,8 +174,6 @@ export class StompSettingsTab extends PluginSettingTab {
     }
 
     private displayAdvancedTab(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName("Advanced Settings").setHeading();
-
         new Setting(containerEl)
             .setName("Log Level")
             .setDesc("Set the logging level for debug output")
@@ -232,7 +189,6 @@ export class StompSettingsTab extends PluginSettingTab {
                 });
             });
 
-        // Key capture test area
         new Setting(containerEl).setName("Key Capture Test").setHeading();
 
         const testArea = containerEl.createEl("div", {

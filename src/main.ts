@@ -41,8 +41,6 @@ export default class StompPlugin extends Plugin {
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        this.setupKeyHandler();
-
         this.addCommand({
             id: "stomp-page-scroll-up",
             name: "Scroll page up",
@@ -55,32 +53,23 @@ export default class StompPlugin extends Plugin {
             callback: () => this.scrollPageDown(),
         });
 
-        this.logger.info("Plugin loaded");
-    }
-
-    onunload() {
-        this.removeKeyHandler();
-        this.logger.info("Plugin unloaded");
-    }
-
-    setupKeyHandler() {
-        this.removeKeyHandler();
-
         this.keydownHandler = (evt: KeyboardEvent) => {
             this.handleKeyDown(evt);
         };
 
         this.registerDomEvent(document, "keydown", this.keydownHandler, { capture: true });
+
+        this.logger.info("Plugin loaded");
     }
 
-    removeKeyHandler() {
-        if (this.keydownHandler) {
-            document.removeEventListener("keydown", this.keydownHandler, { capture: true });
-        }
+    onunload() {
+        document.removeEventListener("keydown", this.keydownHandler, { capture: true });
+        this.keydownHandler = null;
+
+        this.logger.info("Plugin unloaded");
     }
 
     handleKeyDown(evt: KeyboardEvent) {
-        // Find command binding for this key
         const binding = findBindingByKey(this.settings, evt.key);
 
         if (binding && binding.commandId) {
@@ -132,8 +121,5 @@ export default class StompPlugin extends Plugin {
             pageScrollAmount: this.settings.pageScrollAmount,
             pageScrollDuration: this.settings.pageScrollDuration,
         });
-
-        // Reregister key handlers with new settings
-        this.setupKeyHandler();
     }
 }
