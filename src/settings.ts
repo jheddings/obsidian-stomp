@@ -1,18 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
 import ObsidianStompPlugin, { PLUGIN_COMMANDS } from "./main";
-
-export interface KeyBinding {
-    commandId: string;
-    key: string | null;
-}
-
-export interface StompPluginSettings {
-    logLevel: LogLevel;
-    pageScrollDuration: number;
-    pageScrollAmount: number;
-    commandBindings: KeyBinding[];
-}
+import { getCommandBinding, setCommandBinding } from "./config";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
@@ -27,101 +16,38 @@ export const AVAILABLE_KEYS = {
     End: "End",
 } as const;
 
-export function getCommandBinding(
-    settings: StompPluginSettings,
-    commandId: string
-): KeyBinding | undefined {
-    return settings.commandBindings.find((binding) => binding.commandId === commandId);
-}
+abstract class SettingsGroup {
+    public isActive: boolean = false;
 
-export function setCommandBinding(
-    settings: StompPluginSettings,
-    commandId: string,
-    key: string | null
-): void {
-    const existingBinding = settings.commandBindings.find(
-        (binding) => binding.commandId === commandId
-    );
-    if (existingBinding) {
-        existingBinding.key = key;
-    } else {
-        settings.commandBindings.push({ commandId, key });
-    }
-}
+    protected _plugin: ObsidianStompPlugin;
+    protected _name: string;
 
-export function findBindingByKey(
-    settings: StompPluginSettings,
-    key: string
-): KeyBinding | undefined {
-    return settings.commandBindings.find((binding) => binding.key === key);
-}
-
-export class StompSettingsTab extends PluginSettingTab {
-    plugin: ObsidianStompPlugin;
-    private activeTab: string = "keybindings";
-
-    constructor(app: App, plugin: ObsidianStompPlugin) {
-        super(app, plugin);
-        this.plugin = plugin;
+    constructor(plugin: ObsidianStompPlugin, name: string) {
+        this._plugin = plugin;
+        this._name = name;
     }
 
-    display(): void {
-        const { containerEl } = this;
-        containerEl.empty();
-
-        const tabContainer = containerEl.createEl("div", {
-            attr: {
-                style: "display: flex; border-bottom: 1px solid var(--background-modifier-border); margin-bottom: 20px;",
-            },
-        });
-
-        const tabs = [
-            { id: "keybindings", name: "Key Bindings" },
-            { id: "scrolling", name: "Page Scrolling" },
-            { id: "advanced", name: "Advanced" },
-        ];
-
-        tabs.forEach((tab) => {
-            const tabEl = tabContainer.createEl("button", {
-                text: tab.name,
-                attr: {
-                    style: `
-                        padding: 10px 20px;
-                        border: none;
-                        background: ${this.activeTab === tab.id ? "var(--background-modifier-hover)" : "transparent"};
-                        color: var(--text-normal);
-                        cursor: pointer;
-                        border-bottom: ${this.activeTab === tab.id ? "2px solid var(--interactive-accent)" : "2px solid transparent"};
-                    `,
-                },
-            });
-
-            tabEl.addEventListener("click", () => {
-                this.activeTab = tab.id;
-                this.display();
-            });
-        });
-
-        const contentEl = containerEl.createEl("div");
-
-        switch (this.activeTab) {
-            case "keybindings":
-                this.displayKeyBindingsTab(contentEl);
-                break;
-            case "scrolling":
-                this.displayScrollingTab(contentEl);
-                break;
-            case "advanced":
-                this.displayAdvancedTab(contentEl);
-                break;
-        }
+    get id(): string {
+        return this._name.toLowerCase().replace(/\s+/g, "-");
     }
 
-    private displayKeyBindingsTab(containerEl: HTMLElement): void {
+    get name(): string {
+        return this._name;
+    }
+
+    abstract display(containerEl: HTMLElement): void;
+}
+
+class KeyBindingsGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Key Bindings");
+    }
+
+    display(containerEl: HTMLElement): void {
         new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
         PLUGIN_COMMANDS.forEach((command) => {
-            const currentBinding = getCommandBinding(this.plugin.settings, command.id);
+            const currentBinding = getCommandBinding(this._plugin.settings, command.id);
             const currentKey = currentBinding?.key || "";
 
             const setting = new Setting(containerEl)
@@ -138,24 +64,30 @@ export class StompSettingsTab extends PluginSettingTab {
                 dropdown.setValue(currentKey);
                 dropdown.onChange(async (value) => {
                     const newKey = value || null;
-                    setCommandBinding(this.plugin.settings, command.id, newKey);
-                    await this.plugin.saveSettings();
+                    setCommandBinding(this._plugin.settings, command.id, newKey);
+                    await this._plugin.saveSettings();
                 });
             });
         });
     }
+}
 
-    private displayScrollingTab(containerEl: HTMLElement): void {
+class ScrollingGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Page Scrolling");
+    }
+
+    display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Page Scroll Duration")
             .setDesc("Duration of page scroll animation in seconds. Lower values = faster.")
             .addSlider((slider) => {
                 slider.setLimits(0.1, 2.0, 0.05);
-                slider.setValue(this.plugin.settings.pageScrollDuration);
+                slider.setValue(this._plugin.settings.pageScrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this.plugin.settings.pageScrollDuration = value;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.pageScrollDuration = value;
+                    await this._plugin.saveSettings();
                 });
             });
 
@@ -164,16 +96,22 @@ export class StompSettingsTab extends PluginSettingTab {
             .setDesc("Pixels to scroll when page commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(10, 1200, 10);
-                slider.setValue(this.plugin.settings.pageScrollAmount);
+                slider.setValue(this._plugin.settings.pageScrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this.plugin.settings.pageScrollAmount = value;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.pageScrollAmount = value;
+                    await this._plugin.saveSettings();
                 });
             });
     }
+}
 
-    private displayAdvancedTab(containerEl: HTMLElement): void {
+class AdvancedGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Advanced");
+    }
+
+    display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Log Level")
             .setDesc("Set the logging level for debug output")
@@ -182,10 +120,10 @@ export class StompSettingsTab extends PluginSettingTab {
                 dropdown.addOption(LogLevel.WARN.toString(), "Warning");
                 dropdown.addOption(LogLevel.INFO.toString(), "Info");
                 dropdown.addOption(LogLevel.DEBUG.toString(), "Debug");
-                dropdown.setValue(this.plugin.settings.logLevel.toString());
+                dropdown.setValue(this._plugin.settings.logLevel.toString());
                 dropdown.onChange(async (value) => {
-                    this.plugin.settings.logLevel = parseInt(value) as LogLevel;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.logLevel = parseInt(value) as LogLevel;
+                    await this._plugin.saveSettings();
                 });
             });
 
@@ -225,5 +163,61 @@ export class StompSettingsTab extends PluginSettingTab {
                 Timestamp: ${new Date().toLocaleTimeString()}
             `;
         });
+    }
+}
+
+export class StompSettingsTab extends PluginSettingTab {
+    private _tabs: SettingsGroup[];
+
+    constructor(app: App, plugin: ObsidianStompPlugin) {
+        super(app, plugin);
+
+        this._tabs = [
+            new KeyBindingsGroup(plugin),
+            new ScrollingGroup(plugin),
+            new AdvancedGroup(plugin),
+        ];
+    }
+
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
+
+        const tabContainer = containerEl.createEl("div", {
+            attr: {
+                style: "display: flex; border-bottom: 1px solid var(--background-modifier-border); margin-bottom: 20px;",
+            },
+        });
+
+        const tabContentDiv = containerEl.createEl("div");
+
+        this._tabs.forEach((tab) => {
+            const tabEl = tabContainer.createEl("button", {
+                text: tab.name,
+                attr: {
+                    style: `
+                        padding: 10px 20px;
+                        border: none;
+                        background: transparent;
+                        color: var(--text-normal);
+                        cursor: pointer;
+                        border-bottom: 2px solid transparent;
+                    `,
+                },
+            });
+
+            tabEl.addEventListener("click", () => {
+                tabContentDiv.empty();
+
+                this._tabs.forEach((jtab) => {
+                    jtab.isActive = jtab.id === tab.id;
+                });
+
+                tab.display(tabContentDiv);
+            });
+        });
+
+        // show the first tab to start off
+        this._tabs[0].display(tabContentDiv);
     }
 }

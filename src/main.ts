@@ -1,7 +1,8 @@
 import { Plugin, Notice } from "obsidian";
-import { StompPluginSettings, StompSettingsTab, findBindingByKey } from "./settings";
+import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
+import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
     pageScrollDuration: 0.25,
