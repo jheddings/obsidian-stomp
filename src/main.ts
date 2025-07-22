@@ -12,9 +12,9 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
+
     private logger = Logger.getLogger("main");
     private scroller: PageScroller;
-    private keydownHandler: (evt: KeyboardEvent) => void;
 
     listCommands(): Array<{ id: string; name: string }> {
         return [
@@ -24,6 +24,8 @@ export default class StompPlugin extends Plugin {
     }
 
     executeCommand(commandId: string): void {
+        this.logger.debug(`Executing command: ${commandId}`);
+
         switch (commandId) {
             case "stomp-page-scroll-up":
                 this.scrollPageUp();
@@ -53,33 +55,33 @@ export default class StompPlugin extends Plugin {
             callback: () => this.scrollPageDown(),
         });
 
-        this.keydownHandler = (evt: KeyboardEvent) => {
-            this.handleKeyDown(evt);
-        };
-
-        this.registerDomEvent(document, "keydown", this.keydownHandler, { capture: true });
+        this.registerDomEvent(document, "keydown", this.handleKeyDown, { capture: true });
 
         this.logger.info("Plugin loaded");
     }
 
     onunload() {
-        document.removeEventListener("keydown", this.keydownHandler, { capture: true });
-        this.keydownHandler = null;
+        document.removeEventListener("keydown", this.handleKeyDown, { capture: true });
 
         this.logger.info("Plugin unloaded");
     }
 
-    handleKeyDown(evt: KeyboardEvent) {
+    handleKeyDown = (evt: KeyboardEvent) => {
+        this.logger.debug(`Received key event: ${evt.key}`);
+
         const binding = findBindingByKey(this.settings, evt.key);
 
         if (binding && binding.commandId) {
+            this.logger.debug(`Processing key binding for ${evt.key}: ${binding.commandId}`);
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
             this.executeCommand(binding.commandId);
             return false;
         }
-    }
+
+        return true;
+    };
 
     async scrollPageUp() {
         this.logger.info("scrollPageUp");
