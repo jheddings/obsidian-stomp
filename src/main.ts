@@ -10,18 +10,16 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
     commandBindings: [],
 };
 
+export const PLUGIN_COMMANDS = [
+    { id: "stomp-page-scroll-up", name: "Scroll page up" },
+    { id: "stomp-page-scroll-down", name: "Scroll page down" },
+];
+
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
 
     private logger = Logger.getLogger("main");
     private scroller: PageScroller;
-
-    listCommands(): Array<{ id: string; name: string }> {
-        return [
-            { id: "stomp-page-scroll-up", name: "Scroll page up" },
-            { id: "stomp-page-scroll-down", name: "Scroll page down" },
-        ];
-    }
 
     executeCommand(commandId: string): void {
         this.logger.debug(`Executing command: ${commandId}`);
@@ -43,16 +41,12 @@ export default class StompPlugin extends Plugin {
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        this.addCommand({
-            id: "stomp-page-scroll-up",
-            name: "Scroll page up",
-            callback: () => this.scrollPageUp(),
-        });
-
-        this.addCommand({
-            id: "stomp-page-scroll-down",
-            name: "Scroll page down",
-            callback: () => this.scrollPageDown(),
+        PLUGIN_COMMANDS.forEach((command) => {
+            this.addCommand({
+                id: command.id,
+                name: command.name,
+                callback: () => this.executeCommand(command.id),
+            });
         });
 
         this.registerDomEvent(document, "keydown", this.handleKeyDown, { capture: true });

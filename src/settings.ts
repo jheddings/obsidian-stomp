@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
-import ObsidianStompPlugin from "./main";
+import ObsidianStompPlugin, { PLUGIN_COMMANDS } from "./main";
 
 export interface KeyBinding {
     commandId: string;
@@ -120,7 +120,7 @@ export class StompSettingsTab extends PluginSettingTab {
     private displayKeyBindingsTab(containerEl: HTMLElement): void {
         new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
-        this.plugin.listCommands().forEach((command) => {
+        PLUGIN_COMMANDS.forEach((command) => {
             const currentBinding = getCommandBinding(this.plugin.settings, command.id);
             const currentKey = currentBinding?.key || "";
 
