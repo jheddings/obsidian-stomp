@@ -6,7 +6,27 @@ export interface StompPluginSettings {
     logLevel: LogLevel;
     pageScrollDuration: number;
     pageScrollAmount: number;
+    scrollUpKey: string;
+    scrollUpCommand: string;
+    scrollDownKey: string;
+    scrollDownCommand: string;
 }
+
+export const UP_LIKE_KEYS = [
+    { value: "none", display: "None" },
+    { value: "PageUp", display: "Page Up" },
+    { value: "ArrowUp", display: "Up Arrow" },
+    { value: "ArrowLeft", display: "Left Arrow" },
+    { value: "Home", display: "Home" },
+];
+
+export const DOWN_LIKE_KEYS = [
+    { value: "none", display: "None" },
+    { value: "PageDown", display: "Page Down" },
+    { value: "ArrowDown", display: "Down Arrow" },
+    { value: "ArrowRight", display: "Right Arrow" },
+    { value: "End", display: "End" },
+];
 
 export class StompSettingsTab extends PluginSettingTab {
     plugin: ObsidianStompPlugin;
@@ -16,10 +36,87 @@ export class StompSettingsTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
+    getAvailableCommands(): {
+        up: Array<{ value: string; display: string }>;
+        down: Array<{ value: string; display: string }>;
+    } {
+        const commands = this.plugin.listCommands();
+        const upCommands = [{ value: "none", display: "None" }];
+        const downCommands = [{ value: "none", display: "None" }];
+
+        commands.forEach((cmd: { id: string; name: string }) => {
+            if (cmd.id.includes("-up")) {
+                upCommands.push({ value: cmd.id, display: cmd.name });
+            } else if (cmd.id.includes("-down")) {
+                downCommands.push({ value: cmd.id, display: cmd.name });
+            }
+        });
+
+        return { up: upCommands, down: downCommands };
+    }
+
     display(): void {
         const { containerEl } = this;
 
         containerEl.empty();
+
+        const availableCommands = this.getAvailableCommands();
+
+        new Setting(containerEl)
+            .setName("Scroll Up Key")
+            .setDesc("Select which key should trigger scrolling up")
+            .addDropdown((dropdown) => {
+                UP_LIKE_KEYS.forEach((key) => {
+                    dropdown.addOption(key.value, key.display);
+                });
+                dropdown.setValue(this.plugin.settings.scrollUpKey);
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.scrollUpKey = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Scroll Up Command")
+            .setDesc("Select which command to execute when the up key is pressed")
+            .addDropdown((dropdown) => {
+                availableCommands.up.forEach((cmd) => {
+                    dropdown.addOption(cmd.value, cmd.display);
+                });
+                dropdown.setValue(this.plugin.settings.scrollUpCommand);
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.scrollUpCommand = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Scroll Down Key")
+            .setDesc("Select which key should trigger scrolling down")
+            .addDropdown((dropdown) => {
+                DOWN_LIKE_KEYS.forEach((key) => {
+                    dropdown.addOption(key.value, key.display);
+                });
+                dropdown.setValue(this.plugin.settings.scrollDownKey);
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.scrollDownKey = value;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Scroll Down Command")
+            .setDesc("Select which command to execute when the down key is pressed")
+            .addDropdown((dropdown) => {
+                availableCommands.down.forEach((cmd) => {
+                    dropdown.addOption(cmd.value, cmd.display);
+                });
+                dropdown.setValue(this.plugin.settings.scrollDownCommand);
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.scrollDownCommand = value;
+                    await this.plugin.saveSettings();
+                });
+            });
 
         new Setting(this.containerEl).setName("Page Scrolling").setHeading();
 

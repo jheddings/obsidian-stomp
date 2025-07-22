@@ -4,6 +4,10 @@ import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
+    scrollUpKey: "PageUp",
+    scrollUpCommand: "stomp-page-scroll-up",
+    scrollDownKey: "PageDown",
+    scrollDownCommand: "stomp-page-scroll-down",
     pageScrollDuration: 0.25,
     pageScrollAmount: 500,
     logLevel: LogLevel.ERROR,
@@ -13,20 +17,34 @@ export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
     private logger = Logger.getLogger("main");
     private scroller: PageScroller;
+    private keydownHandler: (evt: KeyboardEvent) => void;
+
+    listCommands(): Array<{ id: string; name: string }> {
+        return [
+            { id: "stomp-page-scroll-up", name: "Scroll page up" },
+            { id: "stomp-page-scroll-down", name: "Scroll page down" },
+        ];
+    }
+
+    executeCommand(commandId: string): void {
+        switch (commandId) {
+            case "stomp-page-scroll-up":
+                this.scrollPageUp();
+                break;
+            case "stomp-page-scroll-down":
+                this.scrollPageDown();
+                break;
+            default:
+                this.logger.warn(`Unknown command: ${commandId}`);
+        }
+    }
 
     async onload() {
         await this.loadSettings();
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        this.registerDomEvent(
-            document,
-            "keydown",
-            (evt: KeyboardEvent) => {
-                this.handleKeyDown(evt);
-            },
-            { capture: true }
-        );
+        this.setupKeyHandler();
 
         this.addCommand({
             id: "stomp-page-scroll-up",
@@ -44,29 +62,50 @@ export default class StompPlugin extends Plugin {
     }
 
     onunload() {
+        this.removeKeyHandler();
         this.logger.info("Plugin unloaded");
     }
 
+    setupKeyHandler() {
+        this.removeKeyHandler();
+
+        this.keydownHandler = (evt: KeyboardEvent) => {
+            this.handleKeyDown(evt);
+        };
+
+        this.registerDomEvent(document, "keydown", this.keydownHandler, { capture: true });
+    }
+
+    removeKeyHandler() {
+        if (this.keydownHandler) {
+            document.removeEventListener("keydown", this.keydownHandler, { capture: true });
+        }
+    }
+
     handleKeyDown(evt: KeyboardEvent) {
-        if (evt.key === "PageUp") {
-            evt.preventDefault();
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            this.scrollPageUp();
-            return false;
+        if (evt.key === this.settings.scrollUpKey) {
+            if (this.settings.scrollUpCommand !== "none") {
+                evt.preventDefault();
+                evt.stopPropagation();
+                evt.stopImmediatePropagation();
+                this.executeCommand(this.settings.scrollUpCommand);
+                return false;
+            }
         }
 
-        if (evt.key === "PageDown") {
-            evt.preventDefault();
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            this.scrollPageDown();
-            return false;
+        if (evt.key === this.settings.scrollDownKey) {
+            if (this.settings.scrollDownCommand !== "none") {
+                evt.preventDefault();
+                evt.stopPropagation();
+                evt.stopImmediatePropagation();
+                this.executeCommand(this.settings.scrollDownCommand);
+                return false;
+            }
         }
     }
 
     async scrollPageUp() {
-        this.logger.info("Page Up pressed - scroll up");
+        this.logger.info("scrollPageUp");
         try {
             await this.scroller.scrollUp();
         } catch (error) {
@@ -76,8 +115,7 @@ export default class StompPlugin extends Plugin {
     }
 
     async scrollPageDown() {
-        this.logger.info("Page Down pressed - scroll down");
-
+        this.logger.info("scrollPageDown");
         try {
             await this.scroller.scrollDown();
         } catch (error) {
@@ -106,5 +144,8 @@ export default class StompPlugin extends Plugin {
             pageScrollAmount: this.settings.pageScrollAmount,
             pageScrollDuration: this.settings.pageScrollDuration,
         });
+
+        // Reregister key handlers with new settings
+        this.setupKeyHandler();
     }
 }
