@@ -130,9 +130,7 @@ class AdvancedGroup extends SettingsGroup {
         new Setting(containerEl).setName("Key Capture Test").setHeading();
 
         const testArea = containerEl.createEl("div", {
-            attr: {
-                style: "border: 1px solid var(--background-modifier-border); padding: 10px; margin: 10px 0; border-radius: 4px;",
-            },
+            cls: "stomp-key-test-area",
         });
 
         testArea.createEl("p", {
@@ -140,18 +138,14 @@ class AdvancedGroup extends SettingsGroup {
         });
 
         const keyDisplay = testArea.createEl("div", {
-            attr: {
-                style: "background: var(--background-secondary); padding: 8px; border-radius: 4px; font-family: monospace; min-height: 40px;",
-            },
+            cls: "stomp-key-display",
             text: "No keys pressed yet...",
         });
 
         const testInput = testArea.createEl("input", {
             type: "text",
             placeholder: "Click here and press your pedal buttons or keys",
-            attr: {
-                style: "width: 100%; padding: 8px; margin-top: 8px;",
-            },
+            cls: "stomp-key-test-input",
         });
 
         testInput.addEventListener("keydown", (e) => {
@@ -184,9 +178,7 @@ export class StompSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         const tabContainer = containerEl.createEl("div", {
-            attr: {
-                style: "display: flex; border-bottom: 1px solid var(--background-modifier-border); margin-bottom: 20px;",
-            },
+            cls: "stomp-settings-tab-container",
         });
 
         const tabContentDiv = containerEl.createEl("div");
@@ -194,16 +186,7 @@ export class StompSettingsTab extends PluginSettingTab {
         this._tabs.forEach((tab) => {
             const tabEl = tabContainer.createEl("button", {
                 text: tab.name,
-                attr: {
-                    style: `
-                        padding: 10px 20px;
-                        border: none;
-                        background: transparent;
-                        color: var(--text-normal);
-                        cursor: pointer;
-                        border-bottom: 2px solid transparent;
-                    `,
-                },
+                cls: "stomp-settings-tab-button",
             });
 
             tabEl.addEventListener("click", () => {

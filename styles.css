@@ -1,0 +1,37 @@
+/* Obsidian Stomp Plugin Settings Styles */
+
+.stomp-settings-tab-container {
+    display: flex;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 20px;
+}
+
+.stomp-settings-tab-button {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-normal);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.stomp-key-test-area {
+    border: 1px solid var(--background-modifier-border);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.stomp-key-display {
+    background: var(--background-secondary);
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    min-height: 40px;
+}
+
+.stomp-key-test-input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+}
