@@ -2,123 +2,188 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
 import ObsidianStompPlugin from "./main";
 
+export interface KeyBinding {
+    commandId: string;
+    key: string | null;
+}
+
 export interface StompPluginSettings {
     logLevel: LogLevel;
     pageScrollDuration: number;
     pageScrollAmount: number;
-    scrollUpKey: string;
-    scrollUpCommand: string;
-    scrollDownKey: string;
-    scrollDownCommand: string;
+    commandBindings: KeyBinding[];
 }
 
-export const UP_LIKE_KEYS = [
-    { value: "none", display: "None" },
-    { value: "PageUp", display: "Page Up" },
-    { value: "ArrowUp", display: "Up Arrow" },
-    { value: "ArrowLeft", display: "Left Arrow" },
-    { value: "Home", display: "Home" },
-];
+// Available keys for binding commands
+export const AVAILABLE_KEYS = {
+    PageUp: "Page Up",
+    PageDown: "Page Down",
+    ArrowUp: "Arrow Up",
+    ArrowDown: "Arrow Down",
+    ArrowLeft: "Arrow Left",
+    ArrowRight: "Arrow Right",
+    " ": "Space",
+    Enter: "Enter",
+    Home: "Home",
+    End: "End",
+} as const;
 
-export const DOWN_LIKE_KEYS = [
-    { value: "none", display: "None" },
-    { value: "PageDown", display: "Page Down" },
-    { value: "ArrowDown", display: "Down Arrow" },
-    { value: "ArrowRight", display: "Right Arrow" },
-    { value: "End", display: "End" },
-];
+export type AvailableKey = keyof typeof AVAILABLE_KEYS;
+
+export function getCommandBinding(
+    settings: StompPluginSettings,
+    commandId: string
+): KeyBinding | undefined {
+    return settings.commandBindings.find((binding) => binding.commandId === commandId);
+}
+
+export function setCommandBinding(
+    settings: StompPluginSettings,
+    commandId: string,
+    key: string | null
+): void {
+    const existingBinding = settings.commandBindings.find(
+        (binding) => binding.commandId === commandId
+    );
+    if (existingBinding) {
+        existingBinding.key = key;
+    } else {
+        settings.commandBindings.push({ commandId, key });
+    }
+}
+
+export function findBindingByKey(
+    settings: StompPluginSettings,
+    key: string
+): KeyBinding | undefined {
+    return settings.commandBindings.find((binding) => binding.key === key);
+}
 
 export class StompSettingsTab extends PluginSettingTab {
     plugin: ObsidianStompPlugin;
+    private activeTab: string = "keybindings";
 
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
 
-    getAvailableCommands(): {
-        up: Array<{ value: string; display: string }>;
-        down: Array<{ value: string; display: string }>;
-    } {
-        const commands = this.plugin.listCommands();
-        const upCommands = [{ value: "none", display: "None" }];
-        const downCommands = [{ value: "none", display: "None" }];
-
-        commands.forEach((cmd: { id: string; name: string }) => {
-            if (cmd.id.includes("-up")) {
-                upCommands.push({ value: cmd.id, display: cmd.name });
-            } else if (cmd.id.includes("-down")) {
-                downCommands.push({ value: cmd.id, display: cmd.name });
-            }
-        });
-
-        return { up: upCommands, down: downCommands };
-    }
-
     display(): void {
         const { containerEl } = this;
-
         containerEl.empty();
 
-        const availableCommands = this.getAvailableCommands();
+        const tabContainer = containerEl.createEl("div", {
+            attr: {
+                style: "display: flex; border-bottom: 1px solid var(--background-modifier-border); margin-bottom: 20px;",
+            },
+        });
 
-        new Setting(containerEl)
-            .setName("Scroll Up Key")
-            .setDesc("Select which key should trigger scrolling up")
-            .addDropdown((dropdown) => {
-                UP_LIKE_KEYS.forEach((key) => {
-                    dropdown.addOption(key.value, key.display);
-                });
-                dropdown.setValue(this.plugin.settings.scrollUpKey);
-                dropdown.onChange(async (value) => {
-                    this.plugin.settings.scrollUpKey = value;
-                    await this.plugin.saveSettings();
-                });
+        const tabs = [
+            { id: "keybindings", name: "Key Bindings" },
+            { id: "scrolling", name: "Page Scrolling" },
+            { id: "advanced", name: "Advanced" },
+        ];
+
+        tabs.forEach((tab) => {
+            const tabEl = tabContainer.createEl("button", {
+                text: tab.name,
+                attr: {
+                    style: `
+                        padding: 10px 20px;
+                        border: none;
+                        background: ${this.activeTab === tab.id ? "var(--background-modifier-hover)" : "transparent"};
+                        color: var(--text-normal);
+                        cursor: pointer;
+                        border-bottom: ${this.activeTab === tab.id ? "2px solid var(--interactive-accent)" : "2px solid transparent"};
+                    `,
+                },
             });
 
-        new Setting(containerEl)
-            .setName("Scroll Up Command")
-            .setDesc("Select which command to execute when the up key is pressed")
-            .addDropdown((dropdown) => {
-                availableCommands.up.forEach((cmd) => {
-                    dropdown.addOption(cmd.value, cmd.display);
-                });
-                dropdown.setValue(this.plugin.settings.scrollUpCommand);
-                dropdown.onChange(async (value) => {
-                    this.plugin.settings.scrollUpCommand = value;
-                    await this.plugin.saveSettings();
-                });
+            tabEl.addEventListener("click", () => {
+                this.activeTab = tab.id;
+                this.display();
+            });
+        });
+
+        // Display content based on active tab
+        const contentEl = containerEl.createEl("div");
+
+        switch (this.activeTab) {
+            case "keybindings":
+                this.displayKeyBindingsTab(contentEl);
+                break;
+            case "scrolling":
+                this.displayScrollingTab(contentEl);
+                break;
+            case "advanced":
+                this.displayAdvancedTab(contentEl);
+                break;
+        }
+    }
+
+    private displayKeyBindingsTab(containerEl: HTMLElement): void {
+        new Setting(containerEl).setName("Key Bindings").setHeading();
+
+        new Setting(containerEl).setDesc(
+            "Configure key bindings for plugin commands. Choose from the available keys to assign to each command."
+        );
+
+        // Display all available commands with their key bindings
+        this.plugin.listCommands().forEach((command) => {
+            this.createCommandBindingSetting(containerEl, command.id, command.name);
+        });
+    }
+
+    private createCommandBindingSetting(
+        containerEl: HTMLElement,
+        commandId: string,
+        commandName: string
+    ): void {
+        const currentBinding = getCommandBinding(this.plugin.settings, commandId);
+        const currentKey = currentBinding?.key || "";
+
+        const setting = new Setting(containerEl)
+            .setName(commandName)
+            .setDesc(`Command: ${commandId}`);
+
+        // Key selection dropdown
+        setting.addDropdown((dropdown) => {
+            // Add "None" option
+            dropdown.addOption("", "None");
+
+            // Add all available keys
+            Object.entries(AVAILABLE_KEYS).forEach(([key, displayName]) => {
+                dropdown.addOption(key, displayName);
             });
 
-        new Setting(containerEl)
-            .setName("Scroll Down Key")
-            .setDesc("Select which key should trigger scrolling down")
-            .addDropdown((dropdown) => {
-                DOWN_LIKE_KEYS.forEach((key) => {
-                    dropdown.addOption(key.value, key.display);
-                });
-                dropdown.setValue(this.plugin.settings.scrollDownKey);
-                dropdown.onChange(async (value) => {
-                    this.plugin.settings.scrollDownKey = value;
-                    await this.plugin.saveSettings();
-                });
+            dropdown.setValue(currentKey);
+            dropdown.onChange(async (value) => {
+                const newKey = value || null;
+                setCommandBinding(this.plugin.settings, commandId, newKey);
+                await this.plugin.saveSettings();
+                this.display(); // Refresh to show/hide conflicts
             });
+        });
 
-        new Setting(containerEl)
-            .setName("Scroll Down Command")
-            .setDesc("Select which command to execute when the down key is pressed")
-            .addDropdown((dropdown) => {
-                availableCommands.down.forEach((cmd) => {
-                    dropdown.addOption(cmd.value, cmd.display);
-                });
-                dropdown.setValue(this.plugin.settings.scrollDownCommand);
-                dropdown.onChange(async (value) => {
-                    this.plugin.settings.scrollDownCommand = value;
-                    await this.plugin.saveSettings();
-                });
-            });
+        // Show conflict warning if this key is used by another command
+        if (currentKey) {
+            const conflictingBinding = this.plugin.settings.commandBindings.find(
+                (binding) => binding.key === currentKey && binding.commandId !== commandId
+            );
+            if (conflictingBinding) {
+                const conflictCommand = this.plugin
+                    .listCommands()
+                    .find((cmd) => cmd.id === conflictingBinding.commandId);
+                const keyDisplayName = AVAILABLE_KEYS[currentKey as AvailableKey] || currentKey;
+                setting.setDesc(
+                    `⚠️ Key "${keyDisplayName}" is also assigned to: ${conflictCommand?.name || conflictingBinding.commandId}`
+                );
+            }
+        }
+    }
 
-        new Setting(this.containerEl).setName("Page Scrolling").setHeading();
+    private displayScrollingTab(containerEl: HTMLElement): void {
+        new Setting(containerEl).setName("Page Scrolling").setHeading();
 
         new Setting(containerEl)
             .setName("Page Scroll Duration")
@@ -137,7 +202,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Page Scroll Amount")
-            .setDesc("Pixels to scroll when Page Up/Down is pressed (in Page mode)")
+            .setDesc("Pixels to scroll when Page Up/Down commands are executed")
             .addSlider((slider) => {
                 slider.setLimits(10, 1200, 10);
                 slider.setValue(this.plugin.settings.pageScrollAmount);
@@ -147,8 +212,10 @@ export class StompSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 });
             });
+    }
 
-        new Setting(this.containerEl).setName("Advanced Settings").setHeading();
+    private displayAdvancedTab(containerEl: HTMLElement): void {
+        new Setting(containerEl).setName("Advanced Settings").setHeading();
 
         new Setting(containerEl)
             .setName("Log Level")
@@ -165,7 +232,8 @@ export class StompSettingsTab extends PluginSettingTab {
                 });
             });
 
-        new Setting(this.containerEl).setName("Key Capture Test").setHeading();
+        // Key capture test area
+        new Setting(containerEl).setName("Key Capture Test").setHeading();
 
         const testArea = containerEl.createEl("div", {
             attr: {
@@ -186,7 +254,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         const testInput = testArea.createEl("input", {
             type: "text",
-            placeholder: "Click here and press your pedal buttons",
+            placeholder: "Click here and press your pedal buttons or keys",
             attr: {
                 style: "width: 100%; padding: 8px; margin-top: 8px;",
             },
@@ -195,12 +263,11 @@ export class StompSettingsTab extends PluginSettingTab {
         testInput.addEventListener("keydown", (e) => {
             e.preventDefault();
             keyDisplay.innerHTML = `
-				<strong>Last key pressed:</strong><br>
-				Key: "${e.key}"<br>
-				Code: "${e.code}"<br>
-				Ctrl: ${e.ctrlKey}, Shift: ${e.shiftKey}, Alt: ${e.altKey}<br>
-				Timestamp: ${new Date().toLocaleTimeString()}
-			`;
+                <strong>Key detected:</strong><br>
+                Key: "${e.key}"<br>
+                Code: "${e.code}"<br>
+                Timestamp: ${new Date().toLocaleTimeString()}
+            `;
         });
     }
 }

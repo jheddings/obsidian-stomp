@@ -1,16 +1,13 @@
 import { Plugin, Notice } from "obsidian";
-import { StompPluginSettings, StompSettingsTab } from "./settings";
+import { StompPluginSettings, StompSettingsTab, findBindingByKey } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
-    scrollUpKey: "PageUp",
-    scrollUpCommand: "stomp-page-scroll-up",
-    scrollDownKey: "PageDown",
-    scrollDownCommand: "stomp-page-scroll-down",
     pageScrollDuration: 0.25,
     pageScrollAmount: 500,
     logLevel: LogLevel.ERROR,
+    commandBindings: [],
 };
 
 export default class StompPlugin extends Plugin {
@@ -83,24 +80,15 @@ export default class StompPlugin extends Plugin {
     }
 
     handleKeyDown(evt: KeyboardEvent) {
-        if (evt.key === this.settings.scrollUpKey) {
-            if (this.settings.scrollUpCommand !== "none") {
-                evt.preventDefault();
-                evt.stopPropagation();
-                evt.stopImmediatePropagation();
-                this.executeCommand(this.settings.scrollUpCommand);
-                return false;
-            }
-        }
+        // Find command binding for this key
+        const binding = findBindingByKey(this.settings, evt.key);
 
-        if (evt.key === this.settings.scrollDownKey) {
-            if (this.settings.scrollDownCommand !== "none") {
-                evt.preventDefault();
-                evt.stopPropagation();
-                evt.stopImmediatePropagation();
-                this.executeCommand(this.settings.scrollDownCommand);
-                return false;
-            }
+        if (binding && binding.commandId) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            this.executeCommand(binding.commandId);
+            return false;
         }
     }
 
