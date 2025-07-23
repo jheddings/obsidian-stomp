@@ -78,25 +78,25 @@ export abstract class ViewScroller {
     ): Promise<void> {
         this.stopScroll();
 
-        const scrollableEl = this.getScrollable();
+        const scrollable = this.getScrollable();
 
-        if (!scrollableEl) {
+        if (!scrollable) {
             this.logger.warn("Scrollable not found");
             return Promise.resolve();
         }
 
-        const startingTop = scrollableEl.scrollTop;
+        const startingTop = scrollable.scrollTop;
         const distance = Math.abs(targetTop - startingTop);
 
         this.logger.debug(`Starting scroll: ${startingTop} -> ${targetTop} (${distance}px)`);
 
         if (distance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-            this.directScroll(scrollableEl, targetTop);
+            this.directScroll(scrollable, targetTop);
             return Promise.resolve();
         }
 
         return new Promise((resolve) => {
-            const startTop = scrollableEl.scrollTop;
+            const startTop = scrollable.scrollTop;
             const clampedTop = Math.max(targetTop, 0);
 
             this.logger.debug(
@@ -115,7 +115,7 @@ export abstract class ViewScroller {
 
                 if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
                     this.stopScroll();
-                    this.directScroll(scrollableEl, clampedTop);
+                    this.directScroll(scrollable, clampedTop);
                     this.logger.debug(`Scroll stopped @ ${clampedTop}`);
                     this.animationId = null;
                     resolve();
@@ -123,9 +123,9 @@ export abstract class ViewScroller {
                 }
 
                 currentPosition = nextPosition;
-                this.directScroll(scrollableEl, currentPosition);
+                this.directScroll(scrollable, currentPosition);
 
-                const actualPosition = scrollableEl.scrollTop;
+                const actualPosition = scrollable.scrollTop;
                 if (actualPosition === clampedTop) {
                     this.logger.debug(`Animation completed [${this.animationId}]`);
                     this.animationId = null;
@@ -180,13 +180,14 @@ export class PageScroller extends ViewScroller {
     }
 
     private async performScroll(direction: number): Promise<void> {
-        const scrollableEl = this.getScrollable();
-        if (!scrollableEl) {
+        const scrollable = this.getScrollable();
+
+        if (!scrollable) {
             this.logger.warn("No scrollable element found");
             return;
         }
 
-        const currentTop = scrollableEl.scrollTop;
+        const currentTop = scrollable.scrollTop;
         const targetTop = currentTop + direction * this.options.pageScrollAmount;
         const distance = Math.abs(targetTop - currentTop);
 
