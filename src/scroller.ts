@@ -1,5 +1,5 @@
 import { Logger, LoggerInstance } from "./logger";
-import { App, Editor, MarkdownView } from "obsidian";
+import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
 
 export interface ScrollerOptions {
     pageScrollAmount: number;
@@ -20,6 +20,50 @@ export abstract class ViewScroller {
 
     abstract scrollDown(): Promise<void>;
 
+    protected getScrollable(): HTMLElement | null {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+        if (!activeView) {
+            this.logger.warn("No active view found");
+            return null;
+        }
+
+        const mode = activeView.currentMode;
+
+        if (!(mode instanceof MarkdownPreviewView)) {
+            this.logger.warn(`Unsupported mode: ${mode.constructor.name}`);
+            return activeView.containerEl;
+        }
+
+        const containerEl = mode.containerEl;
+
+        const candidates = [
+            ".markdown-preview-view",
+            ".markdown-preview-sizer",
+            ".view-content",
+            ".markdown-reading-view",
+            ".cm-scroller",
+        ];
+
+        for (const selector of candidates) {
+            const element = containerEl.querySelector(selector) as HTMLElement;
+            if (element && this.isScrollable(element)) {
+                return element;
+            }
+        }
+
+        this.logger.warn("No scrollable found; using fallback");
+
+        return containerEl;
+    }
+
+    private isScrollable(element: HTMLElement): boolean {
+        const style = window.getComputedStyle(element);
+        const hasScrollableContent = element.scrollHeight > element.clientHeight;
+        const hasScrollableStyle = style.overflowY === "scroll" || style.overflowY === "auto";
+        return hasScrollableContent && hasScrollableStyle;
+    }
+
     stopScroll(): void {
         if (this.animationId !== null) {
             cancelAnimationFrame(this.animationId);
@@ -29,22 +73,30 @@ export abstract class ViewScroller {
     }
 
     protected startScroll(
-        editor: Editor,
         targetTop: number,
         scrollFunction: (currentPosition: number) => number
     ): Promise<void> {
         this.stopScroll();
 
-        const startingTop = editor.getScrollInfo().top;
+        const scrollableEl = this.getScrollable();
+
+        if (!scrollableEl) {
+            this.logger.warn("Scrollable not found");
+            return Promise.resolve();
+        }
+
+        const startingTop = scrollableEl.scrollTop;
         const distance = Math.abs(targetTop - startingTop);
 
+        this.logger.debug(`Starting scroll: ${startingTop} -> ${targetTop} (${distance}px)`);
+
         if (distance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-            this.directScroll(editor, targetTop);
-            return;
+            this.directScroll(scrollableEl, targetTop);
+            return Promise.resolve();
         }
 
         return new Promise((resolve) => {
-            const startTop = editor.getScrollInfo().top;
+            const startTop = scrollableEl.scrollTop;
             const clampedTop = Math.max(targetTop, 0);
 
             this.logger.debug(
@@ -63,22 +115,23 @@ export abstract class ViewScroller {
 
                 if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
                     this.stopScroll();
-                    this.directScroll(editor, clampedTop);
+                    this.directScroll(scrollableEl, clampedTop);
+                    this.logger.debug(`Scroll stopped @ ${clampedTop}`);
+                    this.animationId = null;
                     resolve();
                     return;
                 }
 
                 currentPosition = nextPosition;
-                this.directScroll(editor, currentPosition);
+                this.directScroll(scrollableEl, currentPosition);
 
-                const actualPosition = editor.getScrollInfo().top;
+                const actualPosition = scrollableEl.scrollTop;
                 if (actualPosition === clampedTop) {
                     this.logger.debug(`Animation completed [${this.animationId}]`);
                     this.animationId = null;
                     resolve();
                 } else {
                     this.animationId = requestAnimationFrame(animate);
-                    this.logger.debug(`Preparing next frame -- ${this.animationId}`);
                 }
             };
 
@@ -87,20 +140,22 @@ export abstract class ViewScroller {
         });
     }
 
-    protected directScroll(editor: Editor, targetTop: number) {
-        const { top, left } = editor.getScrollInfo();
+    protected directScroll(containerEl: HTMLElement, targetTop: number) {
+        const currentTop = containerEl.scrollTop;
         const clampedTarget = Math.max(targetTop, 0);
 
         this.logger.debug(`Scrolling from ${top} to ${clampedTarget}`);
 
-        editor.scrollTo(left, clampedTarget);
+        containerEl.scrollTop = clampedTarget;
 
-        const { top: newTop } = editor.getScrollInfo();
+        const newTop = containerEl.scrollTop;
 
         if (newTop === 0) {
             this.logger.debug("Reached top of document");
-        } else if (newTop === top) {
+        } else if (newTop === currentTop) {
             this.logger.debug("Reached end of document");
+        } else {
+            this.logger.debug(`Scroll successful: ${currentTop} -> ${newTop}`);
         }
     }
 }
@@ -125,15 +180,13 @@ export class PageScroller extends ViewScroller {
     }
 
     private async performScroll(direction: number): Promise<void> {
-        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-
-        if (!activeView) {
-            this.logger.warn("No active markdown view found");
+        const scrollableEl = this.getScrollable();
+        if (!scrollableEl) {
+            this.logger.warn("No scrollable element found");
             return;
         }
 
-        const editor = activeView.editor;
-        const currentTop = editor.getScrollInfo().top;
+        const currentTop = scrollableEl.scrollTop;
         const targetTop = currentTop + direction * this.options.pageScrollAmount;
         const distance = Math.abs(targetTop - currentTop);
 
@@ -146,7 +199,7 @@ export class PageScroller extends ViewScroller {
 
         this.logger.debug(`Frame Info: ${frameTime}ms; ${pixelsPerFrame}px`);
 
-        await this.startScroll(editor, targetTop, (currentPosition: number) => {
+        await this.startScroll(targetTop, (currentPosition: number) => {
             return currentPosition + pixelsPerFrame;
         });
     }

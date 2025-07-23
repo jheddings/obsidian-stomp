@@ -38,5 +38,11 @@ export function findBindingByKey(
     settings: StompPluginSettings,
     key: string
 ): KeyBinding | undefined {
-    return settings.commandBindings.find((binding) => binding.key === key);
+    const binding = settings.commandBindings.find((binding) => binding.key === key);
+
+    if (binding && binding.commandId) {
+        return binding;
+    }
+
+    return undefined;
 }
