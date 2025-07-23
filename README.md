@@ -4,17 +4,19 @@ A simple Obsidian plugin that enables hands-free reading using foot pedals. STOM
 
 ## Purpose
 
+Some uses for this plugin include:
+
 - Using Obsidian for [chord sheets](https://github.com/jheddings/obsidian-chopro)
 - Taking notes while reading books or papers
 - Keeping hands free for other tasks while reviewing content
-- Using accessibility devices that map to PageUp/PageDown keys
+- Using accessibility devices that map to system keys
 
 ## Features
 
 - **Smooth Scrolling**: Animated page scrolling instead of jarring jumps
-- **Foot Pedal Support**: Maps PageUp/PageDown keys (commonly used by foot pedals)
-- **Customizable Speed**: Adjustable scroll speed and distance
-- **Command Palette**: Manual scroll commands available via Obsidian's command palette
+- **Wide-Range Support**: Configurable key bindings used by many pedals
+- **Customizable Experience**: Adjustable scroll speed and distance
+- **Command Palette**: Scroll commands available via Obsidian's command palette
 
 ## Configuration
 
