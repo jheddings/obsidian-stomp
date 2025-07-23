@@ -192,16 +192,39 @@ export class StompSettingsTab extends PluginSettingTab {
 
             tabEl.addEventListener("click", () => {
                 tabContentDiv.empty();
+                this.activeTab = tab;
 
+                // Update active state and visual indicators
                 this.tabs.forEach((jtab) => {
                     jtab.isActive = jtab.id === tab.id;
                 });
+
+                // Update tab button styles
+                this.updateTabButtonStyles(tabContainer);
 
                 tab.display(tabContentDiv);
             });
         });
 
         // show the first tab to start off
+        this.activeTab = this.tabs[0];
+        this.tabs[0].isActive = true;
         this.tabs[0].display(tabContentDiv);
+
+        // Set initial active tab styling
+        this.updateTabButtonStyles(tabContainer);
+    }
+
+    private updateTabButtonStyles(tabContainer: HTMLElement): void {
+        const tabButtons = tabContainer.querySelectorAll(".stomp-settings-tab-button");
+
+        tabButtons.forEach((button, index) => {
+            const tab = this.tabs[index];
+            if (tab && tab.isActive) {
+                button.addClass("stomp-settings-tab-button-active");
+            } else {
+                button.removeClass("stomp-settings-tab-button-active");
+            }
+        });
     }
 }

@@ -13,6 +13,17 @@
     color: var(--text-normal);
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.stomp-settings-tab-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.stomp-settings-tab-button-active {
+    color: var(--text-accent);
+    border-bottom-color: var(--interactive-accent);
+    background: var(--background-modifier-active-hover);
 }
 
 .stomp-key-test-area {
