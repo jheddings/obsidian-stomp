@@ -161,12 +161,13 @@ class AdvancedGroup extends SettingsGroup {
 }
 
 export class StompSettingsTab extends PluginSettingTab {
-    private _tabs: SettingsGroup[];
+    private tabs: SettingsGroup[];
+    private activeTab: SettingsGroup | null = null;
 
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
 
-        this._tabs = [
+        this.tabs = [
             new KeyBindingsGroup(plugin),
             new ScrollingGroup(plugin),
             new AdvancedGroup(plugin),
@@ -183,7 +184,7 @@ export class StompSettingsTab extends PluginSettingTab {
 
         const tabContentDiv = containerEl.createEl("div");
 
-        this._tabs.forEach((tab) => {
+        this.tabs.forEach((tab) => {
             const tabEl = tabContainer.createEl("button", {
                 text: tab.name,
                 cls: "stomp-settings-tab-button",
@@ -192,7 +193,7 @@ export class StompSettingsTab extends PluginSettingTab {
             tabEl.addEventListener("click", () => {
                 tabContentDiv.empty();
 
-                this._tabs.forEach((jtab) => {
+                this.tabs.forEach((jtab) => {
                     jtab.isActive = jtab.id === tab.id;
                 });
 
@@ -201,6 +202,6 @@ export class StompSettingsTab extends PluginSettingTab {
         });
 
         // show the first tab to start off
-        this._tabs[0].display(tabContentDiv);
+        this.tabs[0].display(tabContentDiv);
     }
 }
