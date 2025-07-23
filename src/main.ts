@@ -1,72 +1,85 @@
 import { Plugin, Notice } from "obsidian";
-import { StompPluginSettings, StompSettingsTab } from "./settings";
+import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
+import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
     pageScrollDuration: 0.25,
     pageScrollAmount: 500,
     logLevel: LogLevel.ERROR,
+    commandBindings: [],
 };
+
+export const PLUGIN_COMMANDS = [
+    { id: "stomp-page-scroll-up", name: "Scroll page up" },
+    { id: "stomp-page-scroll-down", name: "Scroll page down" },
+];
 
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
+
     private logger = Logger.getLogger("main");
     private scroller: PageScroller;
+
+    executeCommand(commandId: string): void {
+        this.logger.debug(`Executing command: ${commandId}`);
+
+        switch (commandId) {
+            case "stomp-page-scroll-up":
+                this.scrollPageUp();
+                break;
+            case "stomp-page-scroll-down":
+                this.scrollPageDown();
+                break;
+            default:
+                this.logger.warn(`Unknown command: ${commandId}`);
+        }
+    }
 
     async onload() {
         await this.loadSettings();
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        this.registerDomEvent(
-            document,
-            "keydown",
-            (evt: KeyboardEvent) => {
-                this.handleKeyDown(evt);
-            },
-            { capture: true }
-        );
-
-        this.addCommand({
-            id: "stomp-page-scroll-up",
-            name: "Scroll page up",
-            callback: () => this.scrollPageUp(),
+        PLUGIN_COMMANDS.forEach((command) => {
+            this.addCommand({
+                id: command.id,
+                name: command.name,
+                callback: () => this.executeCommand(command.id),
+            });
         });
 
-        this.addCommand({
-            id: "stomp-page-scroll-down",
-            name: "Scroll page down",
-            callback: () => this.scrollPageDown(),
-        });
+        this.registerDomEvent(document, "keydown", this.handleKeyDown, { capture: true });
 
         this.logger.info("Plugin loaded");
     }
 
     onunload() {
+        document.removeEventListener("keydown", this.handleKeyDown, { capture: true });
+
         this.logger.info("Plugin unloaded");
     }
 
-    handleKeyDown(evt: KeyboardEvent) {
-        if (evt.key === "PageUp") {
+    handleKeyDown = (evt: KeyboardEvent) => {
+        this.logger.debug(`Received key event: ${evt.key}`);
+
+        const binding = findBindingByKey(this.settings, evt.key);
+
+        if (binding && binding.commandId) {
+            this.logger.debug(`Processing key binding for ${evt.key}: ${binding.commandId}`);
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
-            this.scrollPageUp();
+            this.executeCommand(binding.commandId);
             return false;
         }
 
-        if (evt.key === "PageDown") {
-            evt.preventDefault();
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            this.scrollPageDown();
-            return false;
-        }
-    }
+        return true;
+    };
 
     async scrollPageUp() {
-        this.logger.info("Page Up pressed - scroll up");
+        this.logger.info("scrollPageUp");
         try {
             await this.scroller.scrollUp();
         } catch (error) {
@@ -76,8 +89,7 @@ export default class StompPlugin extends Plugin {
     }
 
     async scrollPageDown() {
-        this.logger.info("Page Down pressed - scroll down");
-
+        this.logger.info("scrollPageDown");
         try {
             await this.scroller.scrollDown();
         } catch (error) {

@@ -1,58 +1,117 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
-import ObsidianStompPlugin from "./main";
+import ObsidianStompPlugin, { PLUGIN_COMMANDS } from "./main";
+import { getCommandBinding, setCommandBinding } from "./config";
 
-export interface StompPluginSettings {
-    logLevel: LogLevel;
-    pageScrollDuration: number;
-    pageScrollAmount: number;
-}
+export const AVAILABLE_KEYS = {
+    PageUp: "Page Up",
+    PageDown: "Page Down",
+    ArrowUp: "Arrow Up",
+    ArrowDown: "Arrow Down",
+    ArrowLeft: "Arrow Left",
+    ArrowRight: "Arrow Right",
+    " ": "Space",
+    Enter: "Enter",
+    Home: "Home",
+    End: "End",
+} as const;
 
-export class StompSettingsTab extends PluginSettingTab {
-    plugin: ObsidianStompPlugin;
+abstract class SettingsGroup {
+    public isActive: boolean = false;
 
-    constructor(app: App, plugin: ObsidianStompPlugin) {
-        super(app, plugin);
-        this.plugin = plugin;
+    protected _plugin: ObsidianStompPlugin;
+    protected _name: string;
+
+    constructor(plugin: ObsidianStompPlugin, name: string) {
+        this._plugin = plugin;
+        this._name = name;
     }
 
-    display(): void {
-        const { containerEl } = this;
+    get id(): string {
+        return this._name.toLowerCase().replace(/\s+/g, "-");
+    }
 
-        containerEl.empty();
+    get name(): string {
+        return this._name;
+    }
 
-        new Setting(this.containerEl).setName("Page Scrolling").setHeading();
+    abstract display(containerEl: HTMLElement): void;
+}
 
+class KeyBindingsGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Key Bindings");
+    }
+
+    display(containerEl: HTMLElement): void {
+        new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
+
+        PLUGIN_COMMANDS.forEach((command) => {
+            const currentBinding = getCommandBinding(this._plugin.settings, command.id);
+            const currentKey = currentBinding?.key || "";
+
+            const setting = new Setting(containerEl)
+                .setName(command.name)
+                .setDesc(`Command: ${command.id}`);
+
+            setting.addDropdown((dropdown) => {
+                dropdown.addOption("", "None");
+
+                Object.entries(AVAILABLE_KEYS).forEach(([key, displayName]) => {
+                    dropdown.addOption(key, displayName);
+                });
+
+                dropdown.setValue(currentKey);
+                dropdown.onChange(async (value) => {
+                    const newKey = value || null;
+                    setCommandBinding(this._plugin.settings, command.id, newKey);
+                    await this._plugin.saveSettings();
+                });
+            });
+        });
+    }
+}
+
+class ScrollingGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Page Scrolling");
+    }
+
+    display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Page Scroll Duration")
-            .setDesc(
-                "Duration of page scroll animation in seconds. Lower values = faster scrolling."
-            )
+            .setDesc("Duration of page scroll animation in seconds. Lower values = faster.")
             .addSlider((slider) => {
                 slider.setLimits(0.1, 2.0, 0.05);
-                slider.setValue(this.plugin.settings.pageScrollDuration);
+                slider.setValue(this._plugin.settings.pageScrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this.plugin.settings.pageScrollDuration = value;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.pageScrollDuration = value;
+                    await this._plugin.saveSettings();
                 });
             });
 
         new Setting(containerEl)
             .setName("Page Scroll Amount")
-            .setDesc("Pixels to scroll when Page Up/Down is pressed (in Page mode)")
+            .setDesc("Pixels to scroll when page commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(10, 1200, 10);
-                slider.setValue(this.plugin.settings.pageScrollAmount);
+                slider.setValue(this._plugin.settings.pageScrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this.plugin.settings.pageScrollAmount = value;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.pageScrollAmount = value;
+                    await this._plugin.saveSettings();
                 });
             });
+    }
+}
 
-        new Setting(this.containerEl).setName("Advanced Settings").setHeading();
+class AdvancedGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Advanced");
+    }
 
+    display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Log Level")
             .setDesc("Set the logging level for debug output")
@@ -61,19 +120,17 @@ export class StompSettingsTab extends PluginSettingTab {
                 dropdown.addOption(LogLevel.WARN.toString(), "Warning");
                 dropdown.addOption(LogLevel.INFO.toString(), "Info");
                 dropdown.addOption(LogLevel.DEBUG.toString(), "Debug");
-                dropdown.setValue(this.plugin.settings.logLevel.toString());
+                dropdown.setValue(this._plugin.settings.logLevel.toString());
                 dropdown.onChange(async (value) => {
-                    this.plugin.settings.logLevel = parseInt(value) as LogLevel;
-                    await this.plugin.saveSettings();
+                    this._plugin.settings.logLevel = parseInt(value) as LogLevel;
+                    await this._plugin.saveSettings();
                 });
             });
 
-        new Setting(this.containerEl).setName("Key Capture Test").setHeading();
+        new Setting(containerEl).setName("Key Capture Test").setHeading();
 
         const testArea = containerEl.createEl("div", {
-            attr: {
-                style: "border: 1px solid var(--background-modifier-border); padding: 10px; margin: 10px 0; border-radius: 4px;",
-            },
+            cls: "stomp-key-test-area",
         });
 
         testArea.createEl("p", {
@@ -81,29 +138,70 @@ export class StompSettingsTab extends PluginSettingTab {
         });
 
         const keyDisplay = testArea.createEl("div", {
-            attr: {
-                style: "background: var(--background-secondary); padding: 8px; border-radius: 4px; font-family: monospace; min-height: 40px;",
-            },
+            cls: "stomp-key-display",
             text: "No keys pressed yet...",
         });
 
         const testInput = testArea.createEl("input", {
             type: "text",
-            placeholder: "Click here and press your pedal buttons",
-            attr: {
-                style: "width: 100%; padding: 8px; margin-top: 8px;",
-            },
+            placeholder: "Click here and press your pedal buttons or keys",
+            cls: "stomp-key-test-input",
         });
 
         testInput.addEventListener("keydown", (e) => {
             e.preventDefault();
             keyDisplay.innerHTML = `
-				<strong>Last key pressed:</strong><br>
-				Key: "${e.key}"<br>
-				Code: "${e.code}"<br>
-				Ctrl: ${e.ctrlKey}, Shift: ${e.shiftKey}, Alt: ${e.altKey}<br>
-				Timestamp: ${new Date().toLocaleTimeString()}
-			`;
+                <strong>Key detected:</strong><br>
+                Key: "${e.key}"<br>
+                Code: "${e.code}"<br>
+                Timestamp: ${new Date().toLocaleTimeString()}
+            `;
         });
+    }
+}
+
+export class StompSettingsTab extends PluginSettingTab {
+    private tabs: SettingsGroup[];
+    private activeTab: SettingsGroup | null = null;
+
+    constructor(app: App, plugin: ObsidianStompPlugin) {
+        super(app, plugin);
+
+        this.tabs = [
+            new KeyBindingsGroup(plugin),
+            new ScrollingGroup(plugin),
+            new AdvancedGroup(plugin),
+        ];
+    }
+
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
+
+        const tabContainer = containerEl.createEl("div", {
+            cls: "stomp-settings-tab-container",
+        });
+
+        const tabContentDiv = containerEl.createEl("div");
+
+        this.tabs.forEach((tab) => {
+            const tabEl = tabContainer.createEl("button", {
+                text: tab.name,
+                cls: "stomp-settings-tab-button",
+            });
+
+            tabEl.addEventListener("click", () => {
+                tabContentDiv.empty();
+
+                this.tabs.forEach((jtab) => {
+                    jtab.isActive = jtab.id === tab.id;
+                });
+
+                tab.display(tabContentDiv);
+            });
+        });
+
+        // show the first tab to start off
+        this.tabs[0].display(tabContentDiv);
     }
 }
