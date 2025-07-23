@@ -1,4 +1,4 @@
-import { Plugin, Notice } from "obsidian";
+import { Plugin, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { PageScroller } from "./scroller";
@@ -66,12 +66,14 @@ export default class StompPlugin extends Plugin {
 
         const binding = findBindingByKey(this.settings, evt.key);
 
-        if (binding && binding.commandId) {
-            this.logger.debug(`Processing key binding for ${evt.key}: ${binding.commandId}`);
+        if (binding && this.isReadingView()) {
+            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
+
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
             this.executeCommand(binding.commandId);
+
             return false;
         }
 
@@ -80,6 +82,7 @@ export default class StompPlugin extends Plugin {
 
     async scrollPageUp() {
         this.logger.info("scrollPageUp");
+
         try {
             await this.scroller.scrollUp();
         } catch (error) {
@@ -90,6 +93,7 @@ export default class StompPlugin extends Plugin {
 
     async scrollPageDown() {
         this.logger.info("scrollPageDown");
+
         try {
             await this.scroller.scrollDown();
         } catch (error) {
@@ -118,5 +122,10 @@ export default class StompPlugin extends Plugin {
             pageScrollAmount: this.settings.pageScrollAmount,
             pageScrollDuration: this.settings.pageScrollDuration,
         });
+    }
+
+    private isReadingView(): boolean {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
     }
 }
