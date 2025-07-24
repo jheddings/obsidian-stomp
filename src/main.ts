@@ -6,7 +6,7 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
     pageScrollDuration: 0.25,
-    pageScrollAmount: 500,
+    pageScrollAmount: 50,
     logLevel: LogLevel.ERROR,
     commandBindings: [],
 };
