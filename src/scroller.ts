@@ -96,43 +96,37 @@ export abstract class ViewScroller {
         }
 
         return new Promise((resolve) => {
-            const startTop = scrollable.scrollTop;
             const clampedTop = Math.max(targetTop, 0);
+            let currentPosition = scrollable.scrollTop;
 
-            this.logger.debug(
-                `Starting animation [${this.animationId}] :: ${startTop} -> ${clampedTop}`
-            );
-
-            let currentPosition = startTop;
+            const finalize = (logMessage: string) => {
+                this.logger.debug(logMessage);
+                this.animationId = null;
+                resolve();
+            };
 
             const animate = () => {
                 const nextPosition = scrollFunction(currentPosition);
                 const remainingDistance = Math.abs(clampedTop - nextPosition);
-
                 this.logger.debug(
                     `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
                 );
 
                 if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-                    this.stopScroll();
                     this.directScroll(scrollable, clampedTop);
-                    this.logger.debug(`Scroll stopped @ ${clampedTop}`);
-                    this.animationId = null;
-                    resolve();
+                    finalize(`Scroll stopped @ ${clampedTop}`);
                     return;
                 }
 
                 currentPosition = nextPosition;
                 this.directScroll(scrollable, currentPosition);
 
-                const actualPosition = scrollable.scrollTop;
-                if (actualPosition === clampedTop) {
-                    this.logger.debug(`Animation completed [${this.animationId}]`);
-                    this.animationId = null;
-                    resolve();
-                } else {
-                    this.animationId = requestAnimationFrame(animate);
+                if (scrollable.scrollTop === clampedTop) {
+                    finalize(`Animation completed [${this.animationId}]`);
+                    return;
                 }
+
+                this.animationId = requestAnimationFrame(animate);
             };
 
             this.animationId = requestAnimationFrame(animate);
