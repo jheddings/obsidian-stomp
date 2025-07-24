@@ -187,35 +187,27 @@ export class PageScroller extends ViewScroller {
             return;
         }
 
-        const currentTop = scrollable.scrollTop;
-        const visibleHeight = scrollable.clientHeight;
-        const scrollAmountPixels = (this.options.pageScrollAmount / 100) * visibleHeight;
+        const { clientHeight, scrollTop } = scrollable;
+        const { pageScrollAmount, pageScrollDuration } = this.options;
 
-        this.logger.debug(
-            `Visible Height: ${visibleHeight}px; Scroll Amount: ${scrollAmountPixels}px`
-        );
-
-        const targetTop = currentTop + direction * scrollAmountPixels;
-        const distance = Math.abs(targetTop - currentTop);
+        const scrollAmount = (pageScrollAmount / 100) * clientHeight;
+        const targetTop = scrollTop + direction * scrollAmount;
+        const durationMs = pageScrollDuration * 1000;
         const frameTime = 1000 / PageScroller.ANIMATION_FRAME_RATE;
-        const scrollDurationMs = this.options.pageScrollDuration * 1000;
 
-        this.logger.debug(
-            `Scrolling ${distance}px from ${currentTop} to ${targetTop} in ${scrollDurationMs}ms`
-        );
+        this.logger.debug(`Visible Height: ${clientHeight}px; Scroll Amount: ${scrollAmount}px`);
+        this.logger.debug(`Scrolling from ${scrollTop} to ${targetTop} in ${durationMs}ms`);
 
-        if (scrollDurationMs <= frameTime) {
+        if (durationMs <= frameTime) {
             this.directScroll(scrollable, targetTop);
             return;
         }
 
-        const totalFrames = Math.ceil(scrollDurationMs / frameTime);
-        const pixelsPerFrame = (direction * distance) / totalFrames;
+        const totalFrames = Math.ceil(durationMs / frameTime);
+        const pixelsPerFrame = (targetTop - scrollTop) / totalFrames;
 
-        this.logger.debug(`Scroll Frame Info: ${frameTime}ms; ${pixelsPerFrame}px`);
+        this.logger.debug(`Scroll Frame Info: ${frameTime}ms; ${pixelsPerFrame}px per frame`);
 
-        await this.startScroll(targetTop, (currentPosition: number) => {
-            return currentPosition + pixelsPerFrame;
-        });
+        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
     }
 }
