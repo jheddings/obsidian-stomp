@@ -1,7 +1,7 @@
 import { Logger, LoggerInstance } from "./logger";
 import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
 
-export interface ScrollerOptions {
+export interface PageScrollerOptions {
     pageScrollAmount: number;
     pageScrollDuration: number;
 }
@@ -96,14 +96,14 @@ export abstract class ViewScroller {
         }
 
         return new Promise((resolve) => {
-            const startTop = scrollable.scrollTop;
             const clampedTop = Math.max(targetTop, 0);
+            let currentPosition = scrollable.scrollTop;
 
-            this.logger.debug(
-                `Starting animation [${this.animationId}] :: ${startTop} -> ${clampedTop}`
-            );
-
-            let currentPosition = startTop;
+            const finalize = (logMessage: string) => {
+                this.logger.debug(logMessage);
+                this.animationId = null;
+                resolve();
+            };
 
             const animate = () => {
                 const nextPosition = scrollFunction(currentPosition);
@@ -114,25 +114,20 @@ export abstract class ViewScroller {
                 );
 
                 if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-                    this.stopScroll();
                     this.directScroll(scrollable, clampedTop);
-                    this.logger.debug(`Scroll stopped @ ${clampedTop}`);
-                    this.animationId = null;
-                    resolve();
+                    finalize(`Scroll stopped @ ${clampedTop}`);
                     return;
                 }
 
                 currentPosition = nextPosition;
                 this.directScroll(scrollable, currentPosition);
 
-                const actualPosition = scrollable.scrollTop;
-                if (actualPosition === clampedTop) {
-                    this.logger.debug(`Animation completed [${this.animationId}]`);
-                    this.animationId = null;
-                    resolve();
-                } else {
-                    this.animationId = requestAnimationFrame(animate);
+                if (scrollable.scrollTop === clampedTop) {
+                    finalize(`Animation completed [${this.animationId}]`);
+                    return;
                 }
+
+                this.animationId = requestAnimationFrame(animate);
             };
 
             this.animationId = requestAnimationFrame(animate);
@@ -142,9 +137,9 @@ export abstract class ViewScroller {
 
     protected directScroll(containerEl: HTMLElement, targetTop: number) {
         const currentTop = containerEl.scrollTop;
-        const clampedTarget = Math.max(targetTop, 0);
+        const clampedTarget = Math.ceil(Math.max(targetTop, 0));
 
-        this.logger.debug(`Scrolling from ${top} to ${clampedTarget}`);
+        this.logger.debug(`Scrolling from ${currentTop} to ${clampedTarget}`);
 
         containerEl.scrollTop = clampedTarget;
 
@@ -161,11 +156,11 @@ export abstract class ViewScroller {
 }
 
 export class PageScroller extends ViewScroller {
-    private options: ScrollerOptions;
+    private options: PageScrollerOptions;
 
     private static readonly ANIMATION_FRAME_RATE = 60;
 
-    constructor(app: App, options: ScrollerOptions) {
+    constructor(app: App, options: PageScrollerOptions) {
         super(app);
         this.options = options;
         this.logger = Logger.getLogger("PageScroller");
@@ -187,21 +182,27 @@ export class PageScroller extends ViewScroller {
             return;
         }
 
-        const currentTop = scrollable.scrollTop;
-        const targetTop = currentTop + direction * this.options.pageScrollAmount;
-        const distance = Math.abs(targetTop - currentTop);
+        const { clientHeight, scrollTop } = scrollable;
+        const { pageScrollAmount, pageScrollDuration } = this.options;
 
-        this.logger.debug(`Scrolling ${distance}px from ${currentTop} to ${targetTop}`);
-
+        const scrollAmount = (pageScrollAmount / 100) * clientHeight;
+        const targetTop = scrollTop + direction * scrollAmount;
+        const durationMs = pageScrollDuration * 1000;
         const frameTime = 1000 / PageScroller.ANIMATION_FRAME_RATE;
-        const pixelsPerFrame =
-            (direction * distance) /
-            Math.ceil((this.options.pageScrollDuration * 1000) / frameTime);
 
-        this.logger.debug(`Frame Info: ${frameTime}ms; ${pixelsPerFrame}px`);
+        this.logger.debug(`Visible Height: ${clientHeight}px; Scroll Amount: ${scrollAmount}px`);
+        this.logger.debug(`Scrolling from ${scrollTop} to ${targetTop} in ${durationMs}ms`);
 
-        await this.startScroll(targetTop, (currentPosition: number) => {
-            return currentPosition + pixelsPerFrame;
-        });
+        if (durationMs <= frameTime) {
+            this.directScroll(scrollable, targetTop);
+            return;
+        }
+
+        const totalFrames = Math.ceil(durationMs / frameTime);
+        const pixelsPerFrame = (targetTop - scrollTop) / totalFrames;
+
+        this.logger.debug(`Scroll Frame Info: ${frameTime}ms; ${pixelsPerFrame}px per frame`);
+
+        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
     }
 }

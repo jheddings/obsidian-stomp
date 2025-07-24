@@ -6,7 +6,7 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
     pageScrollDuration: 0.25,
-    pageScrollAmount: 500,
+    pageScrollAmount: 50,
     logLevel: LogLevel.ERROR,
     commandBindings: [],
 };
@@ -20,7 +20,7 @@ export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
 
     private logger = Logger.getLogger("main");
-    private scroller: PageScroller;
+    private pageScroller: PageScroller;
 
     executeCommand(commandId: string): void {
         this.logger.debug(`Executing command: ${commandId}`);
@@ -84,7 +84,7 @@ export default class StompPlugin extends Plugin {
         this.logger.info("scrollPageUp");
 
         try {
-            await this.scroller.scrollUp();
+            await this.pageScroller.scrollUp();
         } catch (error) {
             this.logger.error("Error during page scroll up:", error);
             new Notice("❌ STOMP: Scroll error", 2000);
@@ -95,7 +95,7 @@ export default class StompPlugin extends Plugin {
         this.logger.info("scrollPageDown");
 
         try {
-            await this.scroller.scrollDown();
+            await this.pageScroller.scrollDown();
         } catch (error) {
             this.logger.error("Error during page scroll down:", error);
             new Notice("❌ STOMP: Scroll error", 2000);
@@ -107,7 +107,7 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.scroller = new PageScroller(this.app, {
+        this.pageScroller = new PageScroller(this.app, {
             pageScrollAmount: this.settings.pageScrollAmount,
             pageScrollDuration: this.settings.pageScrollDuration,
         });
@@ -118,7 +118,7 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.scroller = new PageScroller(this.app, {
+        this.pageScroller = new PageScroller(this.app, {
             pageScrollAmount: this.settings.pageScrollAmount,
             pageScrollDuration: this.settings.pageScrollDuration,
         });

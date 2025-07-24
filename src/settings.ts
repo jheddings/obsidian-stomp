@@ -80,9 +80,9 @@ class ScrollingGroup extends SettingsGroup {
     display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Page Scroll Duration")
-            .setDesc("Duration of page scroll animation in seconds. Lower values = faster.")
+            .setDesc("Duration of page scroll animation in seconds.")
             .addSlider((slider) => {
-                slider.setLimits(0.1, 2.0, 0.05);
+                slider.setLimits(0, 2.0, 0.05);
                 slider.setValue(this._plugin.settings.pageScrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
@@ -93,9 +93,9 @@ class ScrollingGroup extends SettingsGroup {
 
         new Setting(containerEl)
             .setName("Page Scroll Amount")
-            .setDesc("Pixels to scroll when page commands are executed.")
+            .setDesc("Percentage of view to scroll when commands are executed.")
             .addSlider((slider) => {
-                slider.setLimits(10, 1200, 10);
+                slider.setLimits(5, 100, 1);
                 slider.setValue(this._plugin.settings.pageScrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
