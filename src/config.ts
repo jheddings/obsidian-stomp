@@ -5,11 +5,15 @@ export interface KeyBinding {
     key: string | null;
 }
 
+export interface PageScrollSettings {
+    scrollAmount: number;
+    scrollDuration: number;
+}
+
 export interface StompPluginSettings {
-    logLevel: LogLevel;
-    pageScrollDuration: number;
-    pageScrollAmount: number;
     commandBindings: KeyBinding[];
+    pageScrollSettings: PageScrollSettings;
+    logLevel: LogLevel;
 }
 
 export function getCommandBinding(

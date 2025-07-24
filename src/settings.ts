@@ -78,15 +78,17 @@ class ScrollingGroup extends SettingsGroup {
     }
 
     display(containerEl: HTMLElement): void {
+        const settings = this._plugin.settings.pageScrollSettings;
+
         new Setting(containerEl)
             .setName("Page Scroll Duration")
             .setDesc("Duration of page scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 2.0, 0.05);
-                slider.setValue(this._plugin.settings.pageScrollDuration);
+                slider.setValue(settings.scrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this._plugin.settings.pageScrollDuration = value;
+                    settings.scrollDuration = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -96,10 +98,10 @@ class ScrollingGroup extends SettingsGroup {
             .setDesc("Percentage of view to scroll when commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(5, 100, 1);
-                slider.setValue(this._plugin.settings.pageScrollAmount);
+                slider.setValue(settings.scrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    this._plugin.settings.pageScrollAmount = value;
+                    settings.scrollAmount = value;
                     await this._plugin.saveSettings();
                 });
             });
