@@ -1,7 +1,7 @@
 import { Logger, LoggerInstance } from "./logger";
 import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
 
-export interface ScrollerOptions {
+export interface PageScrollerOptions {
     pageScrollAmount: number;
     pageScrollDuration: number;
 }
@@ -161,11 +161,11 @@ export abstract class ViewScroller {
 }
 
 export class PageScroller extends ViewScroller {
-    private options: ScrollerOptions;
+    private options: PageScrollerOptions;
 
     private static readonly ANIMATION_FRAME_RATE = 60;
 
-    constructor(app: App, options: ScrollerOptions) {
+    constructor(app: App, options: PageScrollerOptions) {
         super(app);
         this.options = options;
         this.logger = Logger.getLogger("PageScroller");
