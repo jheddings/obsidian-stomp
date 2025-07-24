@@ -162,7 +162,6 @@ class AdvancedGroup extends SettingsGroup {
 
 export class StompSettingsTab extends PluginSettingTab {
     private tabs: SettingsGroup[];
-    private activeTab: SettingsGroup | null = null;
 
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
@@ -197,11 +196,29 @@ export class StompSettingsTab extends PluginSettingTab {
                     jtab.isActive = jtab.id === tab.id;
                 });
 
+                this.updateTabButtonStyles(tabContainer);
+
                 tab.display(tabContentDiv);
             });
         });
 
         // show the first tab to start off
+        this.tabs[0].isActive = true;
         this.tabs[0].display(tabContentDiv);
+
+        this.updateTabButtonStyles(tabContainer);
+    }
+
+    private updateTabButtonStyles(tabContainer: HTMLElement): void {
+        const tabButtons = tabContainer.querySelectorAll(".stomp-settings-tab-button");
+
+        tabButtons.forEach((button, index) => {
+            const tab = this.tabs[index];
+            if (tab && tab.isActive) {
+                button.addClass("stomp-settings-tab-button-active");
+            } else {
+                button.removeClass("stomp-settings-tab-button-active");
+            }
+        });
     }
 }
