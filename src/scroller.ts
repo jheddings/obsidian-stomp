@@ -1,10 +1,6 @@
+import { PageScrollSettings } from "./config";
 import { Logger, LoggerInstance } from "./logger";
 import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
-
-export interface PageScrollerOptions {
-    pageScrollAmount: number;
-    pageScrollDuration: number;
-}
 
 export abstract class ViewScroller {
     private static readonly ANIMATION_FRAME_THRESHOLD = 5;
@@ -156,11 +152,11 @@ export abstract class ViewScroller {
 }
 
 export class PageScroller extends ViewScroller {
-    private options: PageScrollerOptions;
+    private options: PageScrollSettings;
 
     private static readonly ANIMATION_FRAME_RATE = 60;
 
-    constructor(app: App, options: PageScrollerOptions) {
+    constructor(app: App, options: PageScrollSettings) {
         super(app);
         this.options = options;
         this.logger = Logger.getLogger("PageScroller");
@@ -183,7 +179,7 @@ export class PageScroller extends ViewScroller {
         }
 
         const { clientHeight, scrollTop } = scrollable;
-        const { pageScrollAmount, pageScrollDuration } = this.options;
+        const { scrollAmount: pageScrollAmount, scrollDuration: pageScrollDuration } = this.options;
 
         const scrollAmount = (pageScrollAmount / 100) * clientHeight;
         const targetTop = scrollTop + direction * scrollAmount;

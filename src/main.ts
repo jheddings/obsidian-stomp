@@ -5,10 +5,12 @@ import { PageScroller } from "./scroller";
 import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
-    pageScrollDuration: 0.25,
-    pageScrollAmount: 50,
     logLevel: LogLevel.ERROR,
     commandBindings: [],
+    pageScrollSettings: {
+        scrollDuration: 0.25,
+        scrollAmount: 50,
+    },
 };
 
 export const PLUGIN_COMMANDS = [
@@ -108,8 +110,8 @@ export default class StompPlugin extends Plugin {
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
         this.pageScroller = new PageScroller(this.app, {
-            pageScrollAmount: this.settings.pageScrollAmount,
-            pageScrollDuration: this.settings.pageScrollDuration,
+            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
+            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
         });
     }
 
@@ -119,8 +121,8 @@ export default class StompPlugin extends Plugin {
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
         this.pageScroller = new PageScroller(this.app, {
-            pageScrollAmount: this.settings.pageScrollAmount,
-            pageScrollDuration: this.settings.pageScrollDuration,
+            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
+            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
         });
     }
 
