@@ -108,6 +108,7 @@ export abstract class ViewScroller {
             const animate = () => {
                 const nextPosition = scrollFunction(currentPosition);
                 const remainingDistance = Math.abs(clampedTop - nextPosition);
+
                 this.logger.debug(
                     `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
                 );
