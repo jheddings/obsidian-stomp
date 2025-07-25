@@ -14,6 +14,7 @@ export const AVAILABLE_KEYS = {
     Enter: "Enter",
     Home: "Home",
     End: "End",
+    Escape: "Escape",
 } as const;
 
 abstract class SettingsGroup {

@@ -13,10 +13,6 @@ export abstract class ViewScroller {
         this.logger = Logger.getLogger("ViewScroller");
     }
 
-    abstract scrollUp(): Promise<void>;
-
-    abstract scrollDown(): Promise<void>;
-
     protected getScrollable(): HTMLElement | null {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 
@@ -88,7 +84,7 @@ export abstract class ViewScroller {
         this.logger.debug(`Starting scroll: ${startingTop} -> ${targetTop} (${distance}px)`);
 
         if (distance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-            this.directScroll(scrollable, targetTop);
+            this.performDirectScroll(scrollable, targetTop);
             return Promise.resolve();
         }
 
@@ -115,13 +111,13 @@ export abstract class ViewScroller {
                 );
 
                 if (remainingDistance <= ViewScroller.ANIMATION_FRAME_THRESHOLD) {
-                    this.directScroll(scrollable, clampedTop);
+                    this.performDirectScroll(scrollable, clampedTop);
                     finalize(`Scroll stopped @ ${clampedTop}`);
                     return;
                 }
 
                 currentPosition = nextPosition;
-                this.directScroll(scrollable, currentPosition);
+                this.performDirectScroll(scrollable, currentPosition);
 
                 if (scrollable.scrollTop === clampedTop) {
                     finalize(`Animation completed [${this.animationId}]`);
@@ -136,7 +132,7 @@ export abstract class ViewScroller {
         });
     }
 
-    protected directScroll(containerEl: HTMLElement, targetTop: number) {
+    protected performDirectScroll(containerEl: HTMLElement, targetTop: number) {
         const currentTop = containerEl.scrollTop;
         const clampedTarget = Math.ceil(Math.max(targetTop, 0));
 
@@ -153,6 +149,32 @@ export abstract class ViewScroller {
         } else {
             this.logger.debug(`Scroll successful: ${currentTop} -> ${newTop}`);
         }
+    }
+
+    protected async performAnimatedScroll(targetTop: number, durationMs: number): Promise<void> {
+        const scrollable = this.getScrollable();
+
+        if (!scrollable) {
+            this.logger.warn("No scrollable element found");
+            return;
+        }
+
+        const frameInterval = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
+        const startTop = scrollable.scrollTop;
+
+        this.logger.debug(`Scroll from ${startTop} to ${targetTop} in ${durationMs}ms`);
+
+        if (durationMs <= frameInterval) {
+            this.performDirectScroll(scrollable, targetTop);
+            return;
+        }
+
+        const totalFrames = Math.ceil(durationMs / frameInterval);
+        const pixelsPerFrame = (targetTop - startTop) / totalFrames;
+
+        this.logger.debug(`Frame info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
+
+        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
     }
 }
 
@@ -187,42 +209,20 @@ export class PageScroller extends ViewScroller {
         const scrollAmount = (optScrollAmount / 100) * clientHeight;
         const targetTop = scrollTop + direction * scrollAmount;
         const durationMs = optScrollDuration * 1000;
-        const frameInterval = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
 
         this.logger.debug(`Visible Height: ${clientHeight}px; Scroll Amount: ${scrollAmount}px`);
-        this.logger.debug(`Scrolling from ${scrollTop} to ${targetTop} in ${durationMs}ms`);
 
-        if (durationMs <= frameInterval) {
-            this.directScroll(scrollable, targetTop);
-            return;
-        }
-
-        const totalFrames = Math.ceil(durationMs / frameInterval);
-        const pixelsPerFrame = (targetTop - scrollTop) / totalFrames;
-
-        this.logger.debug(`Scroll Frame Info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
-
-        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
+        await this.performAnimatedScroll(targetTop, durationMs);
     }
 }
 
 export class SectionScroller extends ViewScroller {
     private options: SectionScrollSettings;
 
-    private static readonly ANIMATION_FRAME_RATE = 60;
-
     constructor(app: App, options: SectionScrollSettings) {
         super(app);
         this.options = options;
         this.logger = Logger.getLogger("SectionScroller");
-    }
-
-    async scrollUp(): Promise<void> {
-        await this.scrollToPrevious();
-    }
-
-    async scrollDown(): Promise<void> {
-        await this.scrollToNext();
     }
 
     async scrollToNext(): Promise<void> {
@@ -250,48 +250,30 @@ export class SectionScroller extends ViewScroller {
 
         const targetTop = this.getElementScrollPosition(scrollable, targetElement);
         const durationMs = this.options.scrollDuration * 1000;
-        const frameTime = 1000 / SectionScroller.ANIMATION_FRAME_RATE;
 
         this.logger.debug(
             `Section scroll target: ${targetElement.tagName}.${targetElement.className}`
         );
-        this.logger.debug(`Scrolling to position ${targetTop} in ${durationMs}ms`);
 
-        if (durationMs <= frameTime) {
-            this.directScroll(scrollable, targetTop);
-            return;
-        }
-
-        const startTop = scrollable.scrollTop;
-        const totalFrames = Math.ceil(durationMs / frameTime);
-        const pixelsPerFrame = (targetTop - startTop) / totalFrames;
-
-        this.logger.debug(
-            `Section scroll frame info: ${frameTime}ms; ${pixelsPerFrame}px per frame`
-        );
-
-        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
+        await this.performAnimatedScroll(targetTop, durationMs);
     }
 
     private findTargetSection(container: HTMLElement, direction: number): HTMLElement | null {
         const sections = this.getSectionElements(container);
         const currentTop = container.scrollTop;
-        const tolerance = 5; // pixels
 
         if (direction > 0) {
-            // Find next section below current scroll position
             for (const section of sections) {
                 const sectionTop = this.getElementScrollPosition(container, section);
-                if (sectionTop > currentTop + tolerance) {
+                if (sectionTop > currentTop + ViewScroller.ANIMATION_FRAME_THRESHOLD) {
                     return section;
                 }
             }
         } else {
-            // Find previous section above current scroll position
             for (let i = sections.length - 1; i >= 0; i--) {
                 const section = sections[i];
                 const sectionTop = this.getElementScrollPosition(container, section);
-                if (sectionTop < currentTop - tolerance) {
+                if (sectionTop < currentTop - ViewScroller.ANIMATION_FRAME_THRESHOLD) {
                     return section;
                 }
             }
