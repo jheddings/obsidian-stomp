@@ -94,12 +94,14 @@ export abstract class ViewScroller {
 
         const frameInterval = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
         const clampedTop = Math.max(targetTop, 0);
+        const startTime = performance.now();
 
         return new Promise((resolve) => {
             let currentPosition = scrollable.scrollTop;
 
             const finalize = (logMessage: string) => {
-                this.logger.debug(logMessage);
+                const elapsedTime = performance.now() - startTime;
+                this.logger.debug(`${logMessage} (${elapsedTime.toFixed(2)}ms)`);
                 this.animationId = null;
                 resolve();
             };
