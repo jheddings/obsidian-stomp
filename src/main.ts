@@ -24,6 +24,7 @@ export const PLUGIN_COMMANDS = [
     { id: "stomp-section-scroll-previous", name: "Scroll to previous section" },
     { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
     { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
+    { id: "stomp-stop-scroll", name: "Stop scrolling" },
 ];
 
 export default class StompPlugin extends Plugin {
@@ -146,6 +147,12 @@ export default class StompPlugin extends Plugin {
             case "stomp-section-scroll-previous":
                 this.executeProtectedScroll(async () => {
                     await this.sectionScroller.scrollToPrevious();
+                });
+                break;
+            case "stomp-stop-scroll":
+                this.executeProtectedScroll(async () => {
+                    this.pageScroller.stopScroll();
+                    this.sectionScroller.stopScroll();
                 });
                 break;
             default:
