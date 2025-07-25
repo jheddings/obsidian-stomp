@@ -20,10 +20,10 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 export const PLUGIN_COMMANDS = [
     { id: "stomp-page-scroll-up", name: "Scroll page up" },
     { id: "stomp-page-scroll-down", name: "Scroll page down" },
-    { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
-    { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
     { id: "stomp-section-scroll-next", name: "Scroll to next section" },
     { id: "stomp-section-scroll-previous", name: "Scroll to previous section" },
+    { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
+    { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
 ];
 
 export default class StompPlugin extends Plugin {
@@ -118,16 +118,6 @@ export default class StompPlugin extends Plugin {
         this.logger.debug(`Executing command: ${commandId}`);
 
         switch (commandId) {
-            case "stomp-page-scroll-up":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollUp();
-                });
-                break;
-            case "stomp-page-scroll-down":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollDown();
-                });
-                break;
             case "stomp-quick-scroll-up":
                 this.executeProtectedScroll(async () => {
                     await this.quickPageScroller.scrollUp();
@@ -136,6 +126,16 @@ export default class StompPlugin extends Plugin {
             case "stomp-quick-scroll-down":
                 this.executeProtectedScroll(async () => {
                     await this.quickPageScroller.scrollDown();
+                });
+                break;
+            case "stomp-page-scroll-up":
+                this.executeProtectedScroll(async () => {
+                    await this.pageScroller.scrollUp();
+                });
+                break;
+            case "stomp-page-scroll-down":
+                this.executeProtectedScroll(async () => {
+                    await this.pageScroller.scrollDown();
                 });
                 break;
             case "stomp-section-scroll-next":
