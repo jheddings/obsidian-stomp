@@ -16,6 +16,8 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 export const PLUGIN_COMMANDS = [
     { id: "stomp-page-scroll-up", name: "Scroll page up" },
     { id: "stomp-page-scroll-down", name: "Scroll page down" },
+    { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
+    { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
 ];
 
 export default class StompPlugin extends Plugin {
@@ -23,24 +25,15 @@ export default class StompPlugin extends Plugin {
 
     private logger = Logger.getLogger("main");
     private pageScroller: PageScroller;
-
-    executeCommand(commandId: string): void {
-        this.logger.debug(`Executing command: ${commandId}`);
-
-        switch (commandId) {
-            case "stomp-page-scroll-up":
-                this.scrollPageUp();
-                break;
-            case "stomp-page-scroll-down":
-                this.scrollPageDown();
-                break;
-            default:
-                this.logger.warn(`Unknown command: ${commandId}`);
-        }
-    }
+    private quickPageScroller: PageScroller;
 
     async onload() {
         await this.loadSettings();
+
+        this.quickPageScroller = new PageScroller(this.app, {
+            scrollAmount: 100,
+            scrollDuration: 0.25,
+        });
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
@@ -57,51 +50,10 @@ export default class StompPlugin extends Plugin {
         this.logger.info("Plugin loaded");
     }
 
-    onunload() {
+    async onunload() {
         document.removeEventListener("keydown", this.handleKeyDown, { capture: true });
 
         this.logger.info("Plugin unloaded");
-    }
-
-    handleKeyDown = (evt: KeyboardEvent) => {
-        this.logger.debug(`Received key event: ${evt.key}`);
-
-        const binding = findBindingByKey(this.settings, evt.key);
-
-        if (binding && this.isReadingView()) {
-            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
-
-            evt.preventDefault();
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-            this.executeCommand(binding.commandId);
-
-            return false;
-        }
-
-        return true;
-    };
-
-    async scrollPageUp() {
-        this.logger.info("scrollPageUp");
-
-        try {
-            await this.pageScroller.scrollUp();
-        } catch (error) {
-            this.logger.error("Error during page scroll up:", error);
-            new Notice("❌ STOMP: Scroll error", 2000);
-        }
-    }
-
-    async scrollPageDown() {
-        this.logger.info("scrollPageDown");
-
-        try {
-            await this.pageScroller.scrollDown();
-        } catch (error) {
-            this.logger.error("Error during page scroll down:", error);
-            new Notice("❌ STOMP: Scroll error", 2000);
-        }
     }
 
     async loadSettings() {
@@ -124,6 +76,63 @@ export default class StompPlugin extends Plugin {
             scrollAmount: this.settings.pageScrollSettings.scrollAmount,
             scrollDuration: this.settings.pageScrollSettings.scrollDuration,
         });
+    }
+
+    private handleKeyDown = (evt: KeyboardEvent) => {
+        this.logger.debug(`Received key event: ${evt.key}`);
+
+        const binding = findBindingByKey(this.settings, evt.key);
+
+        if (binding && this.isReadingView()) {
+            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
+
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            this.executeCommand(binding.commandId);
+
+            return false;
+        }
+
+        return true;
+    };
+
+    private executeCommand(commandId: string): void {
+        this.logger.debug(`Executing command: ${commandId}`);
+
+        switch (commandId) {
+            case "stomp-page-scroll-up":
+                this.executeProtectedScroll(async () => {
+                    await this.pageScroller.scrollUp();
+                });
+                break;
+            case "stomp-page-scroll-down":
+                this.executeProtectedScroll(async () => {
+                    await this.pageScroller.scrollDown();
+                });
+                break;
+            case "stomp-quick-scroll-up":
+                this.executeProtectedScroll(async () => {
+                    await this.quickPageScroller.scrollUp();
+                });
+                break;
+            case "stomp-quick-scroll-down":
+                this.executeProtectedScroll(async () => {
+                    await this.quickPageScroller.scrollDown();
+                });
+                break;
+            default:
+                this.logger.warn(`Unknown command: ${commandId}`);
+        }
+    }
+
+    private async executeProtectedScroll(scrollFunc: () => Promise<void>): Promise<void> {
+        try {
+            await scrollFunc();
+        } catch (error) {
+            this.logger.error("Error during scroll:", error);
+            new Notice("❌ STOMP: Scroll error", 2000);
+        }
     }
 
     private isReadingView(): boolean {
