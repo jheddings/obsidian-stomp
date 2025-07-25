@@ -108,6 +108,54 @@ class ScrollingGroup extends SettingsGroup {
     }
 }
 
+class SectionScrollGroup extends SettingsGroup {
+    constructor(plugin: ObsidianStompPlugin) {
+        super(plugin, "Section Scrolling");
+    }
+
+    display(containerEl: HTMLElement): void {
+        const settings = this._plugin.settings.sectionScrollSettings;
+
+        new Setting(containerEl)
+            .setName("Section Scroll Duration")
+            .setDesc("Duration of section scroll animation in seconds.")
+            .addSlider((slider) => {
+                slider.setLimits(0, 2.0, 0.05);
+                slider.setValue(settings.scrollDuration);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    settings.scrollDuration = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Section Elements")
+            .setDesc("CSS selectors for elements to scroll to (one per line). Default: h1, h2, hr")
+            .addTextArea((textArea) => {
+                textArea.setValue(settings.scrollElements.join("\n"));
+                textArea.setPlaceholder("h1\nh2\nh3\nhr\n.custom-section");
+                textArea.onChange(async (value) => {
+                    const elements = value
+                        .split("\n")
+                        .map((line) => line.trim())
+                        .filter((line) => line.length > 0);
+
+                    if (elements.length > 0) {
+                        settings.scrollElements = elements;
+                        await this._plugin.saveSettings();
+                    }
+                });
+            });
+
+        new Setting(containerEl).setDesc(
+            "Configure which HTML elements to treat as sections when scrolling. " +
+                "Use CSS selectors like 'h1', 'h2', 'hr', or custom classes like '.my-section'. " +
+                "The scroller will jump between these elements when using section scroll commands."
+        );
+    }
+}
+
 class AdvancedGroup extends SettingsGroup {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Advanced");
@@ -171,6 +219,7 @@ export class StompSettingsTab extends PluginSettingTab {
         this.tabs = [
             new KeyBindingsGroup(plugin),
             new ScrollingGroup(plugin),
+            new SectionScrollGroup(plugin),
             new AdvancedGroup(plugin),
         ];
     }

@@ -1,4 +1,4 @@
-import { PageScrollSettings } from "./config";
+import { PageScrollSettings, SectionScrollSettings } from "./config";
 import { Logger, LoggerInstance } from "./logger";
 import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
 
@@ -200,5 +200,137 @@ export class PageScroller extends ViewScroller {
         this.logger.debug(`Scroll Frame Info: ${frameTime}ms; ${pixelsPerFrame}px per frame`);
 
         await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
+    }
+}
+
+export class SectionScroller extends ViewScroller {
+    private options: SectionScrollSettings;
+
+    private static readonly ANIMATION_FRAME_RATE = 60;
+
+    constructor(app: App, options: SectionScrollSettings) {
+        super(app);
+        this.options = options;
+        this.logger = Logger.getLogger("SectionScroller");
+    }
+
+    async scrollUp(): Promise<void> {
+        await this.scrollToPrevious();
+    }
+
+    async scrollDown(): Promise<void> {
+        await this.scrollToNext();
+    }
+
+    async scrollToNext(): Promise<void> {
+        await this.performSectionScroll(1);
+    }
+
+    async scrollToPrevious(): Promise<void> {
+        await this.performSectionScroll(-1);
+    }
+
+    private async performSectionScroll(direction: number): Promise<void> {
+        const scrollable = this.getScrollable();
+
+        if (!scrollable) {
+            this.logger.warn("No scrollable element found");
+            return;
+        }
+
+        const targetElement = this.findTargetSection(scrollable, direction);
+
+        if (!targetElement) {
+            this.logger.debug(`No ${direction > 0 ? "next" : "previous"} section found`);
+            return;
+        }
+
+        const targetTop = this.getElementScrollPosition(scrollable, targetElement);
+        const durationMs = this.options.scrollDuration * 1000;
+        const frameTime = 1000 / SectionScroller.ANIMATION_FRAME_RATE;
+
+        this.logger.debug(
+            `Section scroll target: ${targetElement.tagName}.${targetElement.className}`
+        );
+        this.logger.debug(`Scrolling to position ${targetTop} in ${durationMs}ms`);
+
+        if (durationMs <= frameTime) {
+            this.directScroll(scrollable, targetTop);
+            return;
+        }
+
+        const startTop = scrollable.scrollTop;
+        const totalFrames = Math.ceil(durationMs / frameTime);
+        const pixelsPerFrame = (targetTop - startTop) / totalFrames;
+
+        this.logger.debug(
+            `Section scroll frame info: ${frameTime}ms; ${pixelsPerFrame}px per frame`
+        );
+
+        await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
+    }
+
+    private findTargetSection(container: HTMLElement, direction: number): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+        const currentTop = container.scrollTop;
+        const tolerance = 5; // pixels
+
+        if (direction > 0) {
+            // Find next section below current scroll position
+            for (const section of sections) {
+                const sectionTop = this.getElementScrollPosition(container, section);
+                if (sectionTop > currentTop + tolerance) {
+                    return section;
+                }
+            }
+        } else {
+            // Find previous section above current scroll position
+            for (let i = sections.length - 1; i >= 0; i--) {
+                const section = sections[i];
+                const sectionTop = this.getElementScrollPosition(container, section);
+                if (sectionTop < currentTop - tolerance) {
+                    return section;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private getSectionElements(container: HTMLElement): HTMLElement[] {
+        const elements: HTMLElement[] = [];
+
+        for (const selector of this.options.scrollElements) {
+            const found = container.querySelectorAll(selector);
+            found.forEach((el) => {
+                if (el instanceof HTMLElement) {
+                    elements.push(el);
+                }
+            });
+        }
+
+        // Sort by document position
+        elements.sort((a, b) => {
+            const position = a.compareDocumentPosition(b);
+            if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+                return -1;
+            } else if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+                return 1;
+            }
+            return 0;
+        });
+
+        this.logger.debug(`Found ${elements.length} section elements`);
+
+        return elements;
+    }
+
+    private getElementScrollPosition(container: HTMLElement, element: HTMLElement): number {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+
+        // Calculate the relative position within the scrollable container
+        const relativeTop = elementRect.top - containerRect.top;
+        return container.scrollTop + relativeTop;
     }
 }

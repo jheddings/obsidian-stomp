@@ -1,7 +1,7 @@
 import { Plugin, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
-import { PageScroller } from "./scroller";
+import { PageScroller, SectionScroller } from "./scroller";
 import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
@@ -11,6 +11,10 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
         scrollDuration: 0.25,
         scrollAmount: 50,
     },
+    sectionScrollSettings: {
+        scrollElements: ["h1", "h2", "hr"],
+        scrollDuration: 0.5,
+    },
 };
 
 export const PLUGIN_COMMANDS = [
@@ -18,6 +22,8 @@ export const PLUGIN_COMMANDS = [
     { id: "stomp-page-scroll-down", name: "Scroll page down" },
     { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
     { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
+    { id: "stomp-section-scroll-next", name: "Scroll to next section" },
+    { id: "stomp-section-scroll-previous", name: "Scroll to previous section" },
 ];
 
 export default class StompPlugin extends Plugin {
@@ -26,6 +32,7 @@ export default class StompPlugin extends Plugin {
     private logger = Logger.getLogger("main");
     private pageScroller: PageScroller;
     private quickPageScroller: PageScroller;
+    private sectionScroller: SectionScroller;
 
     async onload() {
         await this.loadSettings();
@@ -65,6 +72,11 @@ export default class StompPlugin extends Plugin {
             scrollAmount: this.settings.pageScrollSettings.scrollAmount,
             scrollDuration: this.settings.pageScrollSettings.scrollDuration,
         });
+
+        this.sectionScroller = new SectionScroller(this.app, {
+            scrollElements: this.settings.sectionScrollSettings.scrollElements,
+            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
+        });
     }
 
     async saveSettings() {
@@ -75,6 +87,11 @@ export default class StompPlugin extends Plugin {
         this.pageScroller = new PageScroller(this.app, {
             scrollAmount: this.settings.pageScrollSettings.scrollAmount,
             scrollDuration: this.settings.pageScrollSettings.scrollDuration,
+        });
+
+        this.sectionScroller = new SectionScroller(this.app, {
+            scrollElements: this.settings.sectionScrollSettings.scrollElements,
+            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
         });
     }
 
@@ -119,6 +136,16 @@ export default class StompPlugin extends Plugin {
             case "stomp-quick-scroll-down":
                 this.executeProtectedScroll(async () => {
                     await this.quickPageScroller.scrollDown();
+                });
+                break;
+            case "stomp-section-scroll-next":
+                this.executeProtectedScroll(async () => {
+                    await this.sectionScroller.scrollToNext();
+                });
+                break;
+            case "stomp-section-scroll-previous":
+                this.executeProtectedScroll(async () => {
+                    await this.sectionScroller.scrollToPrevious();
                 });
                 break;
             default:
