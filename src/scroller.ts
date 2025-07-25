@@ -3,10 +3,11 @@ import { Logger, LoggerInstance } from "./logger";
 import { App, MarkdownPreviewView, MarkdownView } from "obsidian";
 
 export abstract class ViewScroller {
-    private static readonly ANIMATION_FRAME_THRESHOLD = 5;
+    protected static readonly ANIMATION_FRAME_RATE = 60;
+    protected static readonly ANIMATION_FRAME_THRESHOLD = 5;
 
     protected logger: LoggerInstance;
-    private animationId: number | null = null;
+    private animationId: NodeJS.Timeout | null = null;
 
     constructor(protected app: App) {
         this.logger = Logger.getLogger("ViewScroller");
@@ -62,7 +63,7 @@ export abstract class ViewScroller {
 
     stopScroll(): void {
         if (this.animationId !== null) {
-            cancelAnimationFrame(this.animationId);
+            clearTimeout(this.animationId);
             this.logger.debug(`Animation stopped [${this.animationId}]`);
             this.animationId = null;
         }
@@ -91,12 +92,16 @@ export abstract class ViewScroller {
             return Promise.resolve();
         }
 
+        const frameInterval = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
+        const clampedTop = Math.max(targetTop, 0);
+        const startTime = performance.now();
+
         return new Promise((resolve) => {
-            const clampedTop = Math.max(targetTop, 0);
             let currentPosition = scrollable.scrollTop;
 
             const finalize = (logMessage: string) => {
-                this.logger.debug(logMessage);
+                const elapsedTime = performance.now() - startTime;
+                this.logger.debug(`${logMessage} (${elapsedTime.toFixed(2)}ms)`);
                 this.animationId = null;
                 resolve();
             };
@@ -123,10 +128,10 @@ export abstract class ViewScroller {
                     return;
                 }
 
-                this.animationId = requestAnimationFrame(animate);
+                this.animationId = setTimeout(animate, frameInterval);
             };
 
-            this.animationId = requestAnimationFrame(animate);
+            this.animationId = setTimeout(animate, frameInterval);
             this.logger.debug(`Animation started [${this.animationId}]`);
         });
     }
@@ -154,8 +159,6 @@ export abstract class ViewScroller {
 export class PageScroller extends ViewScroller {
     private options: PageScrollSettings;
 
-    private static readonly ANIMATION_FRAME_RATE = 60;
-
     constructor(app: App, options: PageScrollSettings) {
         super(app);
         this.options = options;
@@ -179,25 +182,25 @@ export class PageScroller extends ViewScroller {
         }
 
         const { clientHeight, scrollTop } = scrollable;
-        const { scrollAmount: pageScrollAmount, scrollDuration: pageScrollDuration } = this.options;
+        const { scrollAmount: optScrollAmount, scrollDuration: optScrollDuration } = this.options;
 
-        const scrollAmount = (pageScrollAmount / 100) * clientHeight;
+        const scrollAmount = (optScrollAmount / 100) * clientHeight;
         const targetTop = scrollTop + direction * scrollAmount;
-        const durationMs = pageScrollDuration * 1000;
-        const frameTime = 1000 / PageScroller.ANIMATION_FRAME_RATE;
+        const durationMs = optScrollDuration * 1000;
+        const frameInterval = 1000 / ViewScroller.ANIMATION_FRAME_RATE;
 
         this.logger.debug(`Visible Height: ${clientHeight}px; Scroll Amount: ${scrollAmount}px`);
         this.logger.debug(`Scrolling from ${scrollTop} to ${targetTop} in ${durationMs}ms`);
 
-        if (durationMs <= frameTime) {
+        if (durationMs <= frameInterval) {
             this.directScroll(scrollable, targetTop);
             return;
         }
 
-        const totalFrames = Math.ceil(durationMs / frameTime);
+        const totalFrames = Math.ceil(durationMs / frameInterval);
         const pixelsPerFrame = (targetTop - scrollTop) / totalFrames;
 
-        this.logger.debug(`Scroll Frame Info: ${frameTime}ms; ${pixelsPerFrame}px per frame`);
+        this.logger.debug(`Scroll Frame Info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
 
         await this.startScroll(targetTop, (current) => current + pixelsPerFrame);
     }
