@@ -16,6 +16,8 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 export const PLUGIN_COMMANDS = [
     { id: "stomp-page-scroll-up", name: "Scroll page up" },
     { id: "stomp-page-scroll-down", name: "Scroll page down" },
+    { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
+    { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
 ];
 
 export default class StompPlugin extends Plugin {
@@ -23,6 +25,7 @@ export default class StompPlugin extends Plugin {
 
     private logger = Logger.getLogger("main");
     private pageScroller: PageScroller;
+    private quickPageScroller: PageScroller;
 
     executeCommand(commandId: string): void {
         this.logger.debug(`Executing command: ${commandId}`);
@@ -34,6 +37,12 @@ export default class StompPlugin extends Plugin {
             case "stomp-page-scroll-down":
                 this.scrollPageDown();
                 break;
+            case "stomp-quick-scroll-up":
+                this.quickScrollUp();
+                break;
+            case "stomp-quick-scroll-down":
+                this.quickScrollDown();
+                break;
             default:
                 this.logger.warn(`Unknown command: ${commandId}`);
         }
@@ -41,6 +50,11 @@ export default class StompPlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
+
+        this.quickPageScroller = new PageScroller(this.app, {
+            scrollAmount: 100,
+            scrollDuration: 0.25,
+        });
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
@@ -101,6 +115,28 @@ export default class StompPlugin extends Plugin {
         } catch (error) {
             this.logger.error("Error during page scroll down:", error);
             new Notice("❌ STOMP: Scroll error", 2000);
+        }
+    }
+
+    async quickScrollUp() {
+        this.logger.info("quickScrollPageUp");
+
+        try {
+            await this.quickPageScroller.scrollUp();
+        } catch (error) {
+            this.logger.error("Error during quick scroll up:", error);
+            new Notice("❌ STOMP: Quick scroll error", 2000);
+        }
+    }
+
+    async quickScrollDown() {
+        this.logger.info("quickScrollPageDown");
+
+        try {
+            await this.quickPageScroller.scrollDown();
+        } catch (error) {
+            this.logger.error("Error during quick scroll down:", error);
+            new Notice("❌ STOMP: Quick scroll error", 2000);
         }
     }
 
