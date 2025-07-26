@@ -1,7 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
-import ObsidianStompPlugin, { PLUGIN_COMMANDS } from "./main";
+import ObsidianStompPlugin from "./main";
 import { getCommandBinding, setCommandBinding } from "./config";
+import { SCROLL_COMMANDS } from "./controller";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
@@ -47,7 +48,7 @@ class KeyBindingsGroup extends SettingsGroup {
     display(containerEl: HTMLElement): void {
         new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
-        PLUGIN_COMMANDS.forEach((command) => {
+        SCROLL_COMMANDS.forEach((command) => {
             const currentBinding = getCommandBinding(this._plugin.settings, command.id);
             const currentKey = currentBinding?.key || "";
 
