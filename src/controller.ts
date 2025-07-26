@@ -62,15 +62,8 @@ export class ScrollController {
             scrollDuration: 0.25,
         });
 
-        this.pageScroller = new PageScroller(app, {
-            scrollAmount: settings.pageScrollSettings.scrollAmount,
-            scrollDuration: settings.pageScrollSettings.scrollDuration,
-        });
-
-        this.sectionScroller = new SectionScroller(app, {
-            scrollElements: settings.sectionScrollSettings.scrollElements,
-            scrollDuration: settings.sectionScrollSettings.scrollDuration,
-        });
+        this.pageScroller = new PageScroller(app, settings.pageScrollSettings);
+        this.sectionScroller = new SectionScroller(app, settings.sectionScrollSettings);
     }
 
     /**
