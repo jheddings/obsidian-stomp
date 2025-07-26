@@ -7,17 +7,23 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 const DEFAULT_SETTINGS: StompPluginSettings = {
     logLevel: LogLevel.ERROR,
     commandBindings: [],
+
     pageScrollSettings: {
         scrollDuration: 0.25,
         scrollAmount: 50,
     },
+
     quickScrollSettings: {
         scrollDuration: 0.1,
         scrollAmount: 100,
     },
+
     sectionScrollSettings: {
-        scrollElements: ["h1", "h2", "hr"],
         scrollDuration: 0.5,
+        stopAtH1: true,
+        stopAtH2: true,
+        stopAtHR: true,
+        stopAtCustom: [],
     },
 };
 
@@ -72,10 +78,7 @@ export default class StompPlugin extends Plugin {
 
         this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
 
-        this.sectionScroller = new SectionScroller(this.app, {
-            scrollElements: this.settings.sectionScrollSettings.scrollElements,
-            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
-        });
+        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
     }
 
     async saveSettings() {

@@ -158,29 +158,54 @@ class SectionScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Section Elements")
-            .setDesc("CSS selectors for elements to scroll to (one per line). Default: h1, h2, hr")
+            .setName("Stop at Heading level 1 sections")
+            .setDesc("Include `<h1>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtH1);
+                toggle.onChange(async (value) => {
+                    settings.stopAtH1 = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Stop at Heading level 2 sections")
+            .setDesc("Include `<h2>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtH2);
+                toggle.onChange(async (value) => {
+                    settings.stopAtH2 = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Stop at Horizontal Rules")
+            .setDesc("Include `<hr>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtHR);
+                toggle.onChange(async (value) => {
+                    settings.stopAtHR = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Custom Elements")
+            .setDesc("CSS selectors for additional custom elements (one per line).")
             .addTextArea((textArea) => {
-                textArea.setValue(settings.scrollElements.join("\n"));
-                textArea.setPlaceholder("h1\nh2\nh3\nhr\n.custom-section");
+                textArea.setValue(settings.stopAtCustom.join("\n"));
+                textArea.setPlaceholder("h3\nh4\n.custom-section\n[data-section]");
                 textArea.onChange(async (value) => {
                     const elements = value
                         .split("\n")
                         .map((line) => line.trim())
                         .filter((line) => line.length > 0);
 
-                    if (elements.length > 0) {
-                        settings.scrollElements = elements;
-                        await this._plugin.saveSettings();
-                    }
+                    settings.stopAtCustom = elements;
+                    await this._plugin.saveSettings();
                 });
             });
-
-        new Setting(containerEl).setDesc(
-            "Configure which HTML elements to treat as sections when scrolling. " +
-                "Use CSS selectors like 'h1', 'h2', 'hr', or custom classes like '.my-section'. " +
-                "The scroller will jump between these elements when using section scroll commands."
-        );
     }
 }
 
