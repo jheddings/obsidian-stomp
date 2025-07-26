@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 
     quickScrollSettings: {
         scrollDuration: 0.1,
-        scrollAmount: 100,
+        scrollAmount: 95,
     },
 
     sectionScrollSettings: {
