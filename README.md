@@ -1,6 +1,6 @@
 # STOMP - Obsidian Foot Pedal Plugin
 
-A simple Obsidian plugin that enables hands-free reading using foot pedals. STOMP intercepts PageUp and PageDown key events to provide smooth, customizable scrolling through your notes. I initially wrote this to integrate with my [Coda STOMP](https://www.codamusictech.com/) (hence the name), but it should work with any pedal.
+A simple Obsidian plugin that enables hands-free reading using foot pedals. STOMP receives system key events to provide smooth, customizable scrolling through your notes. I initially wrote this to integrate with my [Coda STOMP](https://www.codamusictech.com/) (hence the name), but it should work with any pedal.
 
 ## Purpose
 
@@ -21,6 +21,22 @@ Some uses for this plugin include:
 ## Configuration
 
 Access settings through **Settings → Community Plugins → STOMP**.
+
+### Key Bindings
+
+The key bindings allow a user to configure system-level key events to trigger scroll commands. Typically, these are not available as hotkeys, but it is common for foot pedals to use these keys.
+
+This allows you to mix-and-match scroll settings for different actions. As an example, a common configuration on a foot pedal binds the "Scroll page forward" to `Page Down` and the "Quick scroll up" to `Page Up`.
+
+### Page Scrolling
+
+Page scrolling will scroll the viewable area by a user-defined amount at a specific speed.
+
+There are separate configurations for the standard scroll commands, as well as quick-scroll commands.
+
+### Section Scrolling
+
+Section scrolling allows the user to stop at specific section elements, rather than a fixed page amount.
 
 ## Installation
 
