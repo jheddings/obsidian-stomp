@@ -10,9 +10,15 @@ export interface PageScrollSettings {
     scrollDuration: number;
 }
 
+export interface SectionScrollSettings {
+    scrollElements: string[];
+    scrollDuration: number;
+}
+
 export interface StompPluginSettings {
     commandBindings: KeyBinding[];
     pageScrollSettings: PageScrollSettings;
+    sectionScrollSettings: SectionScrollSettings;
     logLevel: LogLevel;
 }
 
