@@ -218,11 +218,14 @@ export class PageScroller extends ViewScroller {
 
 export class SectionScroller extends ViewScroller {
     private options: SectionScrollSettings;
+    private elements: string[] = [];
 
     constructor(app: App, options: SectionScrollSettings) {
         super(app);
         this.options = options;
         this.logger = Logger.getLogger("SectionScroller");
+
+        this.buildElementSelectors();
     }
 
     async scrollToNext(): Promise<void> {
@@ -258,6 +261,28 @@ export class SectionScroller extends ViewScroller {
         await this.performAnimatedScroll(targetTop, durationMs);
     }
 
+    private buildElementSelectors(): void {
+        this.elements = [];
+
+        if (this.options.enableH1) {
+            this.elements.push("h1");
+        }
+
+        if (this.options.enableH2) {
+            this.elements.push("h2");
+        }
+
+        if (this.options.enableHR) {
+            this.elements.push("hr");
+        }
+
+        if (this.options.customElements) {
+            this.elements.push(...this.options.customElements);
+        }
+
+        this.logger.debug(`Section elements: [${this.elements.join(", ")}]`);
+    }
+
     private findTargetSection(container: HTMLElement, direction: number): HTMLElement | null {
         const sections = this.getSectionElements(container);
         const currentTop = container.scrollTop;
@@ -285,7 +310,7 @@ export class SectionScroller extends ViewScroller {
     private getSectionElements(container: HTMLElement): HTMLElement[] {
         const elements: HTMLElement[] = [];
 
-        for (const selector of this.options.scrollElements) {
+        for (const selector of this.elements) {
             const found = container.querySelectorAll(selector);
             found.forEach((el) => {
                 if (el instanceof HTMLElement) {

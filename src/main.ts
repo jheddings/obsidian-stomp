@@ -7,13 +7,18 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 const DEFAULT_SETTINGS: StompPluginSettings = {
     logLevel: LogLevel.ERROR,
     commandBindings: [],
+
     pageScrollSettings: {
         scrollDuration: 0.25,
         scrollAmount: 50,
     },
+
     sectionScrollSettings: {
-        scrollElements: ["h1", "h2", "hr"],
         scrollDuration: 0.5,
+        enableH1: true,
+        enableH2: false,
+        enableHR: true,
+        customElements: [],
     },
 };
 
@@ -75,7 +80,10 @@ export default class StompPlugin extends Plugin {
         });
 
         this.sectionScroller = new SectionScroller(this.app, {
-            scrollElements: this.settings.sectionScrollSettings.scrollElements,
+            enableH1: this.settings.sectionScrollSettings.enableH1,
+            enableH2: this.settings.sectionScrollSettings.enableH2,
+            enableHR: this.settings.sectionScrollSettings.enableHR,
+            customElements: this.settings.sectionScrollSettings.customElements,
             scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
         });
     }
@@ -91,7 +99,10 @@ export default class StompPlugin extends Plugin {
         });
 
         this.sectionScroller = new SectionScroller(this.app, {
-            scrollElements: this.settings.sectionScrollSettings.scrollElements,
+            enableH1: this.settings.sectionScrollSettings.enableH1,
+            enableH2: this.settings.sectionScrollSettings.enableH2,
+            enableHR: this.settings.sectionScrollSettings.enableHR,
+            customElements: this.settings.sectionScrollSettings.customElements,
             scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
         });
     }
