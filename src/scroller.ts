@@ -179,11 +179,11 @@ export abstract class ViewScroller {
 }
 
 export class PageScroller extends ViewScroller {
-    private options: PageScrollSettings;
-
-    constructor(app: App, options: PageScrollSettings) {
+    constructor(
+        app: App,
+        private options: PageScrollSettings
+    ) {
         super(app);
-        this.options = options;
         this.logger = Logger.getLogger("PageScroller");
     }
 
@@ -204,11 +204,10 @@ export class PageScroller extends ViewScroller {
         }
 
         const { clientHeight, scrollTop } = scrollable;
-        const { scrollAmount: optScrollAmount, scrollDuration: optScrollDuration } = this.options;
 
-        const scrollAmount = (optScrollAmount / 100) * clientHeight;
+        const scrollAmount = (this.options.scrollAmount / 100) * clientHeight;
         const targetTop = scrollTop + direction * scrollAmount;
-        const durationMs = optScrollDuration * 1000;
+        const durationMs = this.options.scrollDuration * 1000;
 
         this.logger.debug(`Visible Height: ${clientHeight}px; Scroll Amount: ${scrollAmount}px`);
 

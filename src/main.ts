@@ -13,6 +13,11 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
         scrollAmount: 50,
     },
 
+    quickScrollSettings: {
+        scrollDuration: 0.1,
+        scrollAmount: 95,
+    },
+
     sectionScrollSettings: {
         scrollDuration: 0.5,
         stopAtH1: true,
@@ -43,11 +48,6 @@ export default class StompPlugin extends Plugin {
     async onload() {
         await this.loadSettings();
 
-        this.quickPageScroller = new PageScroller(this.app, {
-            scrollAmount: 100,
-            scrollDuration: 0.25,
-        });
-
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
         PLUGIN_COMMANDS.forEach((command) => {
@@ -74,6 +74,8 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
+        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
+
         this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
 
         this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
@@ -83,6 +85,8 @@ export default class StompPlugin extends Plugin {
         await this.saveData(this.settings);
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
+
+        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
 
         this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
 
