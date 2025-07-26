@@ -17,7 +17,7 @@ export const AVAILABLE_KEYS = {
     Escape: "Escape",
 } as const;
 
-abstract class SettingsGroup {
+abstract class SettingsTabPage {
     public isActive: boolean = false;
 
     protected _plugin: ObsidianStompPlugin;
@@ -39,7 +39,7 @@ abstract class SettingsGroup {
     abstract display(containerEl: HTMLElement): void;
 }
 
-class KeyBindingsGroup extends SettingsGroup {
+class KeyBindingSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Key Bindings");
     }
@@ -73,23 +73,24 @@ class KeyBindingsGroup extends SettingsGroup {
     }
 }
 
-class ScrollingGroup extends SettingsGroup {
+class PageScrollSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Page Scrolling");
     }
 
     display(containerEl: HTMLElement): void {
-        const settings = this._plugin.settings.pageScrollSettings;
+        const pageSettings = this._plugin.settings.pageScrollSettings;
+        const quickSettings = this._plugin.settings.quickScrollSettings;
 
         new Setting(containerEl)
             .setName("Page Scroll Duration")
             .setDesc("Duration of page scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 2.0, 0.05);
-                slider.setValue(settings.scrollDuration);
+                slider.setValue(pageSettings.scrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    settings.scrollDuration = value;
+                    pageSettings.scrollDuration = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -99,17 +100,43 @@ class ScrollingGroup extends SettingsGroup {
             .setDesc("Percentage of view to scroll when commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(5, 100, 1);
-                slider.setValue(settings.scrollAmount);
+                slider.setValue(pageSettings.scrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    settings.scrollAmount = value;
+                    pageSettings.scrollAmount = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Quick Scroll Duration")
+            .setDesc("Duration of quick scroll animation in seconds.")
+            .addSlider((slider) => {
+                slider.setLimits(0, 0.5, 0.05);
+                slider.setValue(quickSettings.scrollDuration);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    quickSettings.scrollDuration = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Quick Scroll Amount")
+            .setDesc("Percentage of view to scroll when quick commands are executed.")
+            .addSlider((slider) => {
+                slider.setLimits(5, 100, 1);
+                slider.setValue(quickSettings.scrollAmount);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    quickSettings.scrollAmount = value;
                     await this._plugin.saveSettings();
                 });
             });
     }
 }
 
-class SectionScrollGroup extends SettingsGroup {
+class SectionScrollSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Section Scrolling");
     }
@@ -157,7 +184,7 @@ class SectionScrollGroup extends SettingsGroup {
     }
 }
 
-class AdvancedGroup extends SettingsGroup {
+class AdvancedSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Advanced");
     }
@@ -212,16 +239,16 @@ class AdvancedGroup extends SettingsGroup {
 }
 
 export class StompSettingsTab extends PluginSettingTab {
-    private tabs: SettingsGroup[];
+    private tabs: SettingsTabPage[];
 
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
 
         this.tabs = [
-            new KeyBindingsGroup(plugin),
-            new ScrollingGroup(plugin),
-            new SectionScrollGroup(plugin),
-            new AdvancedGroup(plugin),
+            new KeyBindingSettings(plugin),
+            new PageScrollSettings(plugin),
+            new SectionScrollSettings(plugin),
+            new AdvancedSettings(plugin),
         ];
     }
 

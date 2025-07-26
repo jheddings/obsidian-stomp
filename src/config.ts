@@ -18,6 +18,7 @@ export interface SectionScrollSettings {
 export interface StompPluginSettings {
     commandBindings: KeyBinding[];
     pageScrollSettings: PageScrollSettings;
+    quickScrollSettings: PageScrollSettings;
     sectionScrollSettings: SectionScrollSettings;
     logLevel: LogLevel;
 }
