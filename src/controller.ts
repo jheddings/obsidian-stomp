@@ -1,4 +1,4 @@
-import { App, Notice } from "obsidian";
+import { App, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { Logger, LoggerInstance } from "./logger";
 import { PageScroller, SectionScroller } from "./scroller";
 import { StompPluginSettings } from "./config";
@@ -54,7 +54,10 @@ export class ScrollController {
 
     private logger: LoggerInstance;
 
-    constructor(app: App, settings: StompPluginSettings) {
+    constructor(
+        private app: App,
+        settings: StompPluginSettings
+    ) {
         this.logger = Logger.getLogger("ScrollController");
 
         this.quickPageScroller = new PageScroller(app, {
@@ -140,5 +143,10 @@ export class ScrollController {
         this.pageScroller.stopScroll();
         this.quickPageScroller.stopScroll();
         this.sectionScroller.stopScroll();
+    }
+
+    hasActiveView(): boolean {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
     }
 }

@@ -1,8 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
-import ObsidianStompPlugin from "./main";
 import { getCommandBinding, setCommandBinding } from "./config";
 import { SCROLL_COMMANDS } from "./controller";
+import ObsidianStompPlugin from "./main";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",

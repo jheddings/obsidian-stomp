@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, MarkdownPreviewView } from "obsidian";
+import { Plugin } from "obsidian";
 import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { SCROLL_COMMANDS, ScrollController } from "./controller";
@@ -68,7 +68,7 @@ export default class StompPlugin extends Plugin {
 
         const binding = findBindingByKey(this.settings, evt.key);
 
-        if (binding && this.isReadingView()) {
+        if (binding && this.controller.hasActiveView()) {
             this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
 
             evt.preventDefault();
@@ -81,9 +81,4 @@ export default class StompPlugin extends Plugin {
 
         return true;
     };
-
-    private isReadingView(): boolean {
-        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
-    }
 }
