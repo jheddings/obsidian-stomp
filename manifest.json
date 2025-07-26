@@ -1,7 +1,7 @@
 {
     "id": "stomp",
     "name": "STOMP",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "minAppVersion": "0.15.0",
     "description": "Controls for Reading View using foot pedals",
     "author": "Jason Heddings",
