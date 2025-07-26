@@ -134,9 +134,9 @@ class SectionScrollGroup extends SettingsGroup {
             .setName("Stop at Heading level 1 sections")
             .setDesc("Include `<h1>` elements when scrolling to sections.")
             .addToggle((toggle) => {
-                toggle.setValue(settings.enableH1);
+                toggle.setValue(settings.stopAtH1);
                 toggle.onChange(async (value) => {
-                    settings.enableH1 = value;
+                    settings.stopAtH1 = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -145,9 +145,9 @@ class SectionScrollGroup extends SettingsGroup {
             .setName("Stop at Heading level 2 sections")
             .setDesc("Include `<h2>` elements when scrolling to sections.")
             .addToggle((toggle) => {
-                toggle.setValue(settings.enableH2);
+                toggle.setValue(settings.stopAtH2);
                 toggle.onChange(async (value) => {
-                    settings.enableH2 = value;
+                    settings.stopAtH2 = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -156,9 +156,9 @@ class SectionScrollGroup extends SettingsGroup {
             .setName("Stop at Horizontal Rules")
             .setDesc("Include `<hr>` elements when scrolling to sections.")
             .addToggle((toggle) => {
-                toggle.setValue(settings.enableHR);
+                toggle.setValue(settings.stopAtHR);
                 toggle.onChange(async (value) => {
-                    settings.enableHR = value;
+                    settings.stopAtHR = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -167,7 +167,7 @@ class SectionScrollGroup extends SettingsGroup {
             .setName("Custom Elements")
             .setDesc("CSS selectors for additional custom elements (one per line).")
             .addTextArea((textArea) => {
-                textArea.setValue(settings.customElements.join("\n"));
+                textArea.setValue(settings.stopAtCustom.join("\n"));
                 textArea.setPlaceholder("h3\nh4\n.custom-section\n[data-section]");
                 textArea.onChange(async (value) => {
                     const elements = value
@@ -175,7 +175,7 @@ class SectionScrollGroup extends SettingsGroup {
                         .map((line) => line.trim())
                         .filter((line) => line.length > 0);
 
-                    settings.customElements = elements;
+                    settings.stopAtCustom = elements;
                     await this._plugin.saveSettings();
                 });
             });

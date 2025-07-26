@@ -218,7 +218,7 @@ export class PageScroller extends ViewScroller {
 
 export class SectionScroller extends ViewScroller {
     private options: SectionScrollSettings;
-    private elements: string[] = [];
+    private stopSelectors: string[] = [];
 
     constructor(app: App, options: SectionScrollSettings) {
         super(app);
@@ -262,25 +262,25 @@ export class SectionScroller extends ViewScroller {
     }
 
     private buildElementSelectors(): void {
-        this.elements = [];
+        this.stopSelectors = [];
 
-        if (this.options.enableH1) {
-            this.elements.push("h1");
+        if (this.options.stopAtH1) {
+            this.stopSelectors.push("h1");
         }
 
-        if (this.options.enableH2) {
-            this.elements.push("h2");
+        if (this.options.stopAtH2) {
+            this.stopSelectors.push("h2");
         }
 
-        if (this.options.enableHR) {
-            this.elements.push("hr");
+        if (this.options.stopAtHR) {
+            this.stopSelectors.push("hr");
         }
 
-        if (this.options.customElements) {
-            this.elements.push(...this.options.customElements);
+        if (this.options.stopAtCustom) {
+            this.stopSelectors.push(...this.options.stopAtCustom);
         }
 
-        this.logger.debug(`Section elements: [${this.elements.join(", ")}]`);
+        this.logger.debug(`Section elements: [${this.stopSelectors.join(", ")}]`);
     }
 
     private findTargetSection(container: HTMLElement, direction: number): HTMLElement | null {
@@ -310,7 +310,7 @@ export class SectionScroller extends ViewScroller {
     private getSectionElements(container: HTMLElement): HTMLElement[] {
         const elements: HTMLElement[] = [];
 
-        for (const selector of this.elements) {
+        for (const selector of this.stopSelectors) {
             const found = container.querySelectorAll(selector);
             found.forEach((el) => {
                 if (el instanceof HTMLElement) {

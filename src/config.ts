@@ -12,10 +12,12 @@ export interface PageScrollSettings {
 
 export interface SectionScrollSettings {
     scrollDuration: number;
-    enableH1: boolean;
-    enableH2: boolean;
-    enableHR: boolean;
-    customElements: string[];
+
+    stopAtH1: boolean;
+    stopAtH2: boolean;
+    stopAtHR: boolean;
+
+    stopAtCustom: string[];
 }
 
 export interface StompPluginSettings {

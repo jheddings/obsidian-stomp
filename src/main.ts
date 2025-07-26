@@ -15,10 +15,10 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 
     sectionScrollSettings: {
         scrollDuration: 0.5,
-        enableH1: true,
-        enableH2: false,
-        enableHR: true,
-        customElements: [],
+        stopAtH1: true,
+        stopAtH2: true,
+        stopAtHR: true,
+        stopAtCustom: [],
     },
 };
 
@@ -74,18 +74,9 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.pageScroller = new PageScroller(this.app, {
-            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
-            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
-        });
+        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
 
-        this.sectionScroller = new SectionScroller(this.app, {
-            enableH1: this.settings.sectionScrollSettings.enableH1,
-            enableH2: this.settings.sectionScrollSettings.enableH2,
-            enableHR: this.settings.sectionScrollSettings.enableHR,
-            customElements: this.settings.sectionScrollSettings.customElements,
-            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
-        });
+        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
     }
 
     async saveSettings() {
@@ -93,18 +84,9 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.pageScroller = new PageScroller(this.app, {
-            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
-            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
-        });
+        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
 
-        this.sectionScroller = new SectionScroller(this.app, {
-            enableH1: this.settings.sectionScrollSettings.enableH1,
-            enableH2: this.settings.sectionScrollSettings.enableH2,
-            enableHR: this.settings.sectionScrollSettings.enableHR,
-            customElements: this.settings.sectionScrollSettings.customElements,
-            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
-        });
+        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
     }
 
     private handleKeyDown = (evt: KeyboardEvent) => {
