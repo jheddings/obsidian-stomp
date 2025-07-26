@@ -7,13 +7,23 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 const DEFAULT_SETTINGS: StompPluginSettings = {
     logLevel: LogLevel.ERROR,
     commandBindings: [],
+
     pageScrollSettings: {
         scrollDuration: 0.25,
         scrollAmount: 50,
     },
+
+    quickScrollSettings: {
+        scrollDuration: 0.1,
+        scrollAmount: 95,
+    },
+
     sectionScrollSettings: {
-        scrollElements: ["h1", "h2", "hr"],
         scrollDuration: 0.5,
+        stopAtH1: true,
+        stopAtH2: true,
+        stopAtHR: true,
+        stopAtCustom: [],
     },
 };
 
@@ -37,11 +47,6 @@ export default class StompPlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
-
-        this.quickPageScroller = new PageScroller(this.app, {
-            scrollAmount: 100,
-            scrollDuration: 0.25,
-        });
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
@@ -69,15 +74,11 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.pageScroller = new PageScroller(this.app, {
-            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
-            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
-        });
+        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
 
-        this.sectionScroller = new SectionScroller(this.app, {
-            scrollElements: this.settings.sectionScrollSettings.scrollElements,
-            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
-        });
+        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
+
+        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
     }
 
     async saveSettings() {
@@ -85,15 +86,11 @@ export default class StompPlugin extends Plugin {
 
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.pageScroller = new PageScroller(this.app, {
-            scrollAmount: this.settings.pageScrollSettings.scrollAmount,
-            scrollDuration: this.settings.pageScrollSettings.scrollDuration,
-        });
+        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
 
-        this.sectionScroller = new SectionScroller(this.app, {
-            scrollElements: this.settings.sectionScrollSettings.scrollElements,
-            scrollDuration: this.settings.sectionScrollSettings.scrollDuration,
-        });
+        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
+
+        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
     }
 
     private handleKeyDown = (evt: KeyboardEvent) => {

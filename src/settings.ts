@@ -17,7 +17,7 @@ export const AVAILABLE_KEYS = {
     Escape: "Escape",
 } as const;
 
-abstract class SettingsGroup {
+abstract class SettingsTabPage {
     public isActive: boolean = false;
 
     protected _plugin: ObsidianStompPlugin;
@@ -39,7 +39,7 @@ abstract class SettingsGroup {
     abstract display(containerEl: HTMLElement): void;
 }
 
-class KeyBindingsGroup extends SettingsGroup {
+class KeyBindingSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Key Bindings");
     }
@@ -73,23 +73,24 @@ class KeyBindingsGroup extends SettingsGroup {
     }
 }
 
-class ScrollingGroup extends SettingsGroup {
+class PageScrollSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Page Scrolling");
     }
 
     display(containerEl: HTMLElement): void {
-        const settings = this._plugin.settings.pageScrollSettings;
+        const pageSettings = this._plugin.settings.pageScrollSettings;
+        const quickSettings = this._plugin.settings.quickScrollSettings;
 
         new Setting(containerEl)
             .setName("Page Scroll Duration")
             .setDesc("Duration of page scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 2.0, 0.05);
-                slider.setValue(settings.scrollDuration);
+                slider.setValue(pageSettings.scrollDuration);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    settings.scrollDuration = value;
+                    pageSettings.scrollDuration = value;
                     await this._plugin.saveSettings();
                 });
             });
@@ -99,17 +100,43 @@ class ScrollingGroup extends SettingsGroup {
             .setDesc("Percentage of view to scroll when commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(5, 100, 1);
-                slider.setValue(settings.scrollAmount);
+                slider.setValue(pageSettings.scrollAmount);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
-                    settings.scrollAmount = value;
+                    pageSettings.scrollAmount = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Quick Scroll Duration")
+            .setDesc("Duration of quick scroll animation in seconds.")
+            .addSlider((slider) => {
+                slider.setLimits(0, 0.5, 0.05);
+                slider.setValue(quickSettings.scrollDuration);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    quickSettings.scrollDuration = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Quick Scroll Amount")
+            .setDesc("Percentage of view to scroll when quick commands are executed.")
+            .addSlider((slider) => {
+                slider.setLimits(5, 100, 1);
+                slider.setValue(quickSettings.scrollAmount);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    quickSettings.scrollAmount = value;
                     await this._plugin.saveSettings();
                 });
             });
     }
 }
 
-class SectionScrollGroup extends SettingsGroup {
+class SectionScrollSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Section Scrolling");
     }
@@ -131,33 +158,58 @@ class SectionScrollGroup extends SettingsGroup {
             });
 
         new Setting(containerEl)
-            .setName("Section Elements")
-            .setDesc("CSS selectors for elements to scroll to (one per line). Default: h1, h2, hr")
+            .setName("Stop at Heading level 1 sections")
+            .setDesc("Include `<h1>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtH1);
+                toggle.onChange(async (value) => {
+                    settings.stopAtH1 = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Stop at Heading level 2 sections")
+            .setDesc("Include `<h2>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtH2);
+                toggle.onChange(async (value) => {
+                    settings.stopAtH2 = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Stop at Horizontal Rules")
+            .setDesc("Include `<hr>` elements when scrolling to sections.")
+            .addToggle((toggle) => {
+                toggle.setValue(settings.stopAtHR);
+                toggle.onChange(async (value) => {
+                    settings.stopAtHR = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Custom Elements")
+            .setDesc("CSS selectors for additional custom elements (one per line).")
             .addTextArea((textArea) => {
-                textArea.setValue(settings.scrollElements.join("\n"));
-                textArea.setPlaceholder("h1\nh2\nh3\nhr\n.custom-section");
+                textArea.setValue(settings.stopAtCustom.join("\n"));
+                textArea.setPlaceholder("h3\nh4\n.custom-section\n[data-section]");
                 textArea.onChange(async (value) => {
                     const elements = value
                         .split("\n")
                         .map((line) => line.trim())
                         .filter((line) => line.length > 0);
 
-                    if (elements.length > 0) {
-                        settings.scrollElements = elements;
-                        await this._plugin.saveSettings();
-                    }
+                    settings.stopAtCustom = elements;
+                    await this._plugin.saveSettings();
                 });
             });
-
-        new Setting(containerEl).setDesc(
-            "Configure which HTML elements to treat as sections when scrolling. " +
-                "Use CSS selectors like 'h1', 'h2', 'hr', or custom classes like '.my-section'. " +
-                "The scroller will jump between these elements when using section scroll commands."
-        );
     }
 }
 
-class AdvancedGroup extends SettingsGroup {
+class AdvancedSettings extends SettingsTabPage {
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Advanced");
     }
@@ -212,16 +264,16 @@ class AdvancedGroup extends SettingsGroup {
 }
 
 export class StompSettingsTab extends PluginSettingTab {
-    private tabs: SettingsGroup[];
+    private tabs: SettingsTabPage[];
 
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
 
         this.tabs = [
-            new KeyBindingsGroup(plugin),
-            new ScrollingGroup(plugin),
-            new SectionScrollGroup(plugin),
-            new AdvancedGroup(plugin),
+            new KeyBindingSettings(plugin),
+            new PageScrollSettings(plugin),
+            new SectionScrollSettings(plugin),
+            new AdvancedSettings(plugin),
         ];
     }
 
