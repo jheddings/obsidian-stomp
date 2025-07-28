@@ -5,6 +5,7 @@ import { Logger, LoggerInstance } from "./logger";
 import {
     PageScrollerDown,
     PageScrollerUp,
+    ScrollStopper,
     SectionScrollerNext,
     SectionScrollerPrev,
     ViewScroller,
@@ -66,6 +67,8 @@ export class ScrollController {
     ) {
         this.logger = Logger.getLogger("ScrollController");
         this.engine = new ScrollEngine();
+
+        this.scrollStrategies.set("stomp-stop-scroll", new ScrollStopper(this.engine));
 
         this.scrollStrategies.set(
             "stomp-page-scroll-up",

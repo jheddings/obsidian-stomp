@@ -12,6 +12,17 @@ export abstract class ViewScroller {
     abstract execute(element: HTMLElement): Promise<void>;
 }
 
+export class ScrollStopper extends ViewScroller {
+    constructor(engine: ScrollEngine) {
+        super(engine);
+        this.logger = Logger.getLogger("ScrollStopper");
+    }
+
+    async execute(_element: HTMLElement): Promise<void> {
+        this.engine.stopAnimation();
+    }
+}
+
 abstract class PageScroller extends ViewScroller {
     protected options: PageScrollSettings;
 
