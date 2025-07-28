@@ -11,13 +11,19 @@ export interface PageScrollSettings {
 }
 
 export interface SectionScrollSettings {
-    scrollElements: string[];
     scrollDuration: number;
+
+    stopAtH1: boolean;
+    stopAtH2: boolean;
+    stopAtHR: boolean;
+
+    stopAtCustom: string[];
 }
 
 export interface StompPluginSettings {
     commandBindings: KeyBinding[];
     pageScrollSettings: PageScrollSettings;
+    quickScrollSettings: PageScrollSettings;
     sectionScrollSettings: SectionScrollSettings;
     logLevel: LogLevel;
 }

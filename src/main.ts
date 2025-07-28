@@ -7,13 +7,23 @@ import { findBindingByKey, StompPluginSettings } from "./config";
 const DEFAULT_SETTINGS: StompPluginSettings = {
     logLevel: LogLevel.ERROR,
     commandBindings: [],
+
     pageScrollSettings: {
         scrollDuration: 0.25,
         scrollAmount: 50,
     },
+
+    quickScrollSettings: {
+        scrollDuration: 0.1,
+        scrollAmount: 95,
+    },
+
     sectionScrollSettings: {
-        scrollElements: ["h1", "h2", "hr"],
         scrollDuration: 0.5,
+        stopAtH1: true,
+        stopAtH2: true,
+        stopAtHR: true,
+        stopAtCustom: [],
     },
 };
 
