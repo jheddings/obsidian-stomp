@@ -13,11 +13,27 @@ export class ScrollEngine {
     }
 
     activate(element: HTMLElement): void {
+        if (this.activeElement) {
+            this.logger.warn("Existing active element; deactivating");
+            this.deactivate();
+        }
+
         this.activeElement = element;
+
+        this.logger.debug(`Activated element: ${element.tagName}#${element.id}`);
     }
 
     deactivate(): void {
+        if (!this.activeElement) {
+            this.logger.warn("No active element");
+            return;
+        }
+
+        const elementInfo = `${this.activeElement.tagName}#${this.activeElement.id}`;
+
         this.activeElement = null;
+
+        this.logger.debug(`Deactivated element: ${elementInfo}`);
     }
 
     stopAnimation(): void {
@@ -65,6 +81,10 @@ export class ScrollEngine {
                 const nextPosition = currentPosition + pixelsPerFrame;
                 const remainingDistance = Math.abs(clampedTop - nextPosition);
 
+                this.logger.debug(
+                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
+                );
+
                 if (remainingDistance <= ScrollEngine.ANIMATION_FRAME_THRESHOLD) {
                     this.directScroll(clampedTop);
                     finalize(`Scroll stopped @ ${clampedTop}`);
@@ -75,7 +95,7 @@ export class ScrollEngine {
                 this.directScroll(currentPosition);
 
                 if (this.activeElement.scrollTop === clampedTop) {
-                    finalize(`Animation completed [${this.animationId}]`);
+                    finalize("Animation completed");
                     return;
                 }
 

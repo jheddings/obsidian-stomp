@@ -1,8 +1,14 @@
 import { App, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
-import { Logger, LoggerInstance } from "./logger";
-import { PageScrollerDown, PageScrollerUp, ScrollStrategy } from "./scroller";
 import { StompPluginSettings } from "./config";
 import { ScrollEngine } from "./engine";
+import { Logger, LoggerInstance } from "./logger";
+import {
+    PageScrollerDown,
+    PageScrollerUp,
+    SectionScrollerNext,
+    SectionScrollerPrev,
+    ViewScroller,
+} from "./scroller";
 
 export interface ScrollCommand {
     id: string;
@@ -27,7 +33,7 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         description: "Scroll to the next heading or section element",
     },
     {
-        id: "stomp-section-scroll-previous",
+        id: "stomp-section-scroll-prev",
         name: "Scroll to previous section",
         description: "Scroll to the previous heading or section element",
     },
@@ -49,7 +55,7 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
 ];
 
 export class ScrollController {
-    private scrollStrategies: Map<string, ScrollStrategy> = new Map();
+    private scrollStrategies: Map<string, ViewScroller> = new Map();
     private engine: ScrollEngine;
 
     private logger: LoggerInstance;
@@ -76,6 +82,14 @@ export class ScrollController {
         this.scrollStrategies.set(
             "stomp-quick-scroll-down",
             new PageScrollerDown(this.engine, settings.quickScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-section-scroll-next",
+            new SectionScrollerNext(this.engine, settings.sectionScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-section-scroll-prev",
+            new SectionScrollerPrev(this.engine, settings.sectionScrollSettings)
         );
     }
 
@@ -108,7 +122,7 @@ export class ScrollController {
         }
     }
 
-    private async executeScroll(scroll: ScrollStrategy): Promise<void> {
+    private async executeScroll(scroll: ViewScroller): Promise<void> {
         const element = this.getScrollable();
         if (!element) throw new Error("No scrollable element found");
 

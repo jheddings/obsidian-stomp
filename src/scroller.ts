@@ -1,8 +1,8 @@
-import { PageScrollSettings } from "./config";
+import { PageScrollSettings, SectionScrollSettings } from "./config";
 import { ScrollEngine } from "./engine";
 import { Logger, LoggerInstance } from "./logger";
 
-export abstract class ScrollStrategy {
+export abstract class ViewScroller {
     protected logger: LoggerInstance;
 
     constructor(protected engine: ScrollEngine) {
@@ -12,18 +12,22 @@ export abstract class ScrollStrategy {
     abstract execute(element: HTMLElement): Promise<void>;
 }
 
-export abstract class PageScroller extends ScrollStrategy {
-    constructor(
-        engine: ScrollEngine,
-        protected options: PageScrollSettings
-    ) {
+abstract class PageScroller extends ViewScroller {
+    protected options: PageScrollSettings;
+
+    constructor(engine: ScrollEngine, options: PageScrollSettings) {
         super(engine);
 
+        this.options = options;
         this.logger = Logger.getLogger("PageScroller");
     }
 
     get scrollDurationMs(): number {
         return this.options.scrollDuration * 1000;
+    }
+
+    protected getScrollSizePx(element: HTMLElement): number {
+        return (this.options.scrollAmount / 100) * element.clientHeight;
     }
 }
 
@@ -36,7 +40,7 @@ export class PageScrollerUp extends PageScroller {
     async execute(element: HTMLElement): Promise<void> {
         this.engine.activate(element);
 
-        const scrollAmount = (this.options.scrollAmount / 100) * element.clientHeight;
+        const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop - scrollAmount;
         await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
 
@@ -53,7 +57,7 @@ export class PageScrollerDown extends PageScroller {
     async execute(element: HTMLElement): Promise<void> {
         this.engine.activate(element);
 
-        const scrollAmount = (this.options.scrollAmount / 100) * element.clientHeight;
+        const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop + scrollAmount;
         await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
 
@@ -61,99 +65,55 @@ export class PageScrollerDown extends PageScroller {
     }
 }
 
-/*
-export class SectionScroller extends ScrollStrategy {
+abstract class SectionScroller extends ViewScroller {
+    static readonly SECTION_MINIMUM_GAP = 5;
+
     private options: SectionScrollSettings;
     private stopSelectors: string[] = [];
 
-    constructor(app: App, options: SectionScrollSettings) {
-        super(app);
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine);
+
         this.options = options;
         this.logger = Logger.getLogger("SectionScroller");
 
-        this.buildElementSelectors();
+        this.buildElementSelectors(options);
     }
 
-    async scrollToNext(): Promise<void> {
-        await this.performSectionScroll(1);
+    get scrollDurationMs(): number {
+        return this.options.scrollDuration * 1000;
     }
 
-    async scrollToPrevious(): Promise<void> {
-        await this.performSectionScroll(-1);
+    protected async scrollToElement(container: HTMLElement, target: HTMLElement): Promise<void> {
+        this.logger.debug(`Section scroll target: ${target.tagName}.${target.className}`);
+
+        const targetTop = this.getElementScrollPosition(container, target);
+        await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
     }
 
-    private async performSectionScroll(direction: number): Promise<void> {
-        const scrollable = this.getScrollable();
-
-        if (!scrollable) {
-            this.logger.warn("No scrollable element found");
-            return;
-        }
-
-        const targetElement = this.findTargetSection(scrollable, direction);
-
-        if (!targetElement) {
-            this.logger.debug(`No ${direction > 0 ? "next" : "previous"} section found`);
-            return;
-        }
-
-        const targetTop = this.getElementScrollPosition(scrollable, targetElement);
-        const durationMs = this.options.scrollDuration * 1000;
-
-        this.logger.debug(
-            `Section scroll target: ${targetElement.tagName}.${targetElement.className}`
-        );
-
-        await this.performAnimatedScroll(targetTop, durationMs);
-    }
-
-    private buildElementSelectors(): void {
+    private buildElementSelectors(options: SectionScrollSettings): void {
         this.stopSelectors = [];
 
-        if (this.options.stopAtH1) {
+        if (options.stopAtH1) {
             this.stopSelectors.push("h1");
         }
 
-        if (this.options.stopAtH2) {
+        if (options.stopAtH2) {
             this.stopSelectors.push("h2");
         }
 
-        if (this.options.stopAtHR) {
+        if (options.stopAtHR) {
             this.stopSelectors.push("hr");
         }
 
-        if (this.options.stopAtCustom) {
-            this.stopSelectors.push(...this.options.stopAtCustom);
+        if (options.stopAtCustom) {
+            this.stopSelectors.push(...options.stopAtCustom);
         }
 
         this.logger.debug(`Section elements: [${this.stopSelectors.join(", ")}]`);
     }
 
-    private findTargetSection(container: HTMLElement, direction: number): HTMLElement | null {
-        const sections = this.getSectionElements(container);
-        const currentTop = container.scrollTop;
-
-        if (direction > 0) {
-            for (const section of sections) {
-                const sectionTop = this.getElementScrollPosition(container, section);
-                if (sectionTop > currentTop + ScrollStrategy.ANIMATION_FRAME_THRESHOLD) {
-                    return section;
-                }
-            }
-        } else {
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const section = sections[i];
-                const sectionTop = this.getElementScrollPosition(container, section);
-                if (sectionTop < currentTop - ScrollStrategy.ANIMATION_FRAME_THRESHOLD) {
-                    return section;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private getSectionElements(container: HTMLElement): HTMLElement[] {
+    protected getSectionElements(container: HTMLElement): HTMLElement[] {
         const elements: HTMLElement[] = [];
 
         for (const selector of this.stopSelectors) {
@@ -176,18 +136,90 @@ export class SectionScroller extends ScrollStrategy {
             return 0;
         });
 
-        this.logger.debug(`Found ${elements.length} section elements`);
-
         return elements;
     }
 
-    private getElementScrollPosition(container: HTMLElement, element: HTMLElement): number {
+    protected getElementScrollPosition(container: HTMLElement, element: HTMLElement): number {
         const containerRect = container.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
 
-        // Calculate the relative position within the scrollable container
+        // calculate the relative position to an element within the container
         const relativeTop = elementRect.top - containerRect.top;
         return container.scrollTop + relativeTop;
     }
 }
-*/
+
+export class SectionScrollerNext extends SectionScroller {
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("SectionScrollerNext");
+    }
+
+    private findNextSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+        const currentTop = container.scrollTop;
+
+        for (const section of sections) {
+            const sectionTop = this.getElementScrollPosition(container, section);
+
+            // find the next section beyond the current position (with a minimum gap)
+            if (sectionTop > currentTop + SectionScroller.SECTION_MINIMUM_GAP) {
+                return section;
+            }
+        }
+
+        this.logger.debug("Next section not found");
+
+        return null;
+    }
+
+    async execute(element: HTMLElement): Promise<void> {
+        this.engine.activate(element);
+
+        const targetElement = this.findNextSection(element);
+
+        if (targetElement) {
+            await this.scrollToElement(element, targetElement);
+        }
+
+        this.engine.deactivate();
+    }
+}
+
+export class SectionScrollerPrev extends SectionScroller {
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("SectionScrollerPrevious");
+    }
+
+    private findPreviousSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+        const currentTop = container.scrollTop;
+
+        for (let i = sections.length - 1; i >= 0; i--) {
+            const section = sections[i];
+            const sectionTop = this.getElementScrollPosition(container, section);
+
+            // find the previous section before the current position (with a minimum gap)
+            if (sectionTop < currentTop - SectionScroller.SECTION_MINIMUM_GAP) {
+                return section;
+            }
+        }
+
+        this.logger.debug("Previous section not found");
+
+        return null;
+    }
+
+    async execute(element: HTMLElement): Promise<void> {
+        this.engine.activate(element);
+
+        const targetElement = this.findPreviousSection(element);
+
+        if (targetElement) {
+            await this.scrollToElement(element, targetElement);
+        }
+
+        this.engine.deactivate();
+    }
+}
