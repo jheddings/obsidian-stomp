@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { MarkdownPreviewView, MarkdownView, Plugin } from "obsidian";
 import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
 import { SCROLL_COMMANDS, ScrollController } from "./controller";
@@ -60,14 +60,16 @@ export default class StompPlugin extends Plugin {
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-        Logger.setGlobalLogLevel(this.settings.logLevel);
-
-        this.controller = new ScrollController(this.app, this.settings);
+        this.applySettings();
     }
 
     async saveSettings() {
         await this.saveData(this.settings);
 
+        this.applySettings();
+    }
+
+    private applySettings() {
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
         this.controller = new ScrollController(this.app, this.settings);
@@ -78,12 +80,12 @@ export default class StompPlugin extends Plugin {
 
         const binding = findBindingByKey(this.settings, evt.key);
 
-        if (binding && this.controller.hasActiveView()) {
-            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
-
+        if (binding && this.hasActiveView()) {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
+
+            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
             this.controller.executeCommand(binding.commandId);
 
             return false;
@@ -91,4 +93,9 @@ export default class StompPlugin extends Plugin {
 
         return true;
     };
+
+    hasActiveView(): boolean {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
+    }
 }

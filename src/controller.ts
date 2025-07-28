@@ -1,7 +1,8 @@
 import { App, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { Logger, LoggerInstance } from "./logger";
-import { PageScroller, SectionScroller } from "./scroller";
+import { PageScrollerDown, PageScrollerUp, ScrollStrategy } from "./scroller";
 import { StompPluginSettings } from "./config";
+import { ScrollEngine } from "./engine";
 
 export interface ScrollCommand {
     id: string;
@@ -48,9 +49,8 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
 ];
 
 export class ScrollController {
-    private pageScroller: PageScroller;
-    private quickPageScroller: PageScroller;
-    private sectionScroller: SectionScroller;
+    private scrollStrategies: Map<string, ScrollStrategy> = new Map();
+    private engine: ScrollEngine;
 
     private logger: LoggerInstance;
 
@@ -59,80 +59,31 @@ export class ScrollController {
         settings: StompPluginSettings
     ) {
         this.logger = Logger.getLogger("ScrollController");
+        this.engine = new ScrollEngine();
 
-        this.quickPageScroller = new PageScroller(app, {
-            scrollAmount: 100,
-            scrollDuration: 0.25,
-        });
-
-        this.pageScroller = new PageScroller(app, settings.pageScrollSettings);
-        this.sectionScroller = new SectionScroller(app, settings.sectionScrollSettings);
+        this.scrollStrategies.set(
+            "stomp-page-scroll-up",
+            new PageScrollerUp(this.engine, settings.pageScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-page-scroll-down",
+            new PageScrollerDown(this.engine, settings.pageScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-quick-scroll-up",
+            new PageScrollerUp(this.engine, settings.quickScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-quick-scroll-down",
+            new PageScrollerDown(this.engine, settings.quickScrollSettings)
+        );
     }
 
     /**
      * Check if a command ID is valid
      */
     isValidCommand(commandId: string): boolean {
-        return SCROLL_COMMANDS.some((cmd) => cmd.id === commandId);
-    }
-
-    /**
-     * Execute a scroll command by ID
-     */
-    async executeCommand(commandId: string): Promise<void> {
-        if (!this.isValidCommand(commandId)) {
-            this.logger.warn(`Unknown command: ${commandId}`);
-            return;
-        }
-
-        this.logger.debug(`Executing scroll command: ${commandId}`);
-
-        switch (commandId) {
-            case "stomp-quick-scroll-up":
-                this.executeProtectedScroll(async () => {
-                    await this.quickPageScroller.scrollUp();
-                });
-                break;
-            case "stomp-quick-scroll-down":
-                this.executeProtectedScroll(async () => {
-                    await this.quickPageScroller.scrollDown();
-                });
-                break;
-            case "stomp-page-scroll-up":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollUp();
-                });
-                break;
-            case "stomp-page-scroll-down":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollDown();
-                });
-                break;
-            case "stomp-section-scroll-next":
-                this.executeProtectedScroll(async () => {
-                    await this.sectionScroller.scrollToNext();
-                });
-                break;
-            case "stomp-section-scroll-previous":
-                this.executeProtectedScroll(async () => {
-                    await this.sectionScroller.scrollToPrevious();
-                });
-                break;
-            case "stomp-stop-scroll":
-                this.stopAllScrolling();
-                break;
-            default:
-                this.logger.warn(`Unhandled command: ${commandId}`);
-        }
-    }
-
-    private async executeProtectedScroll(scrollFunc: () => Promise<void>): Promise<void> {
-        try {
-            await scrollFunc();
-        } catch (error) {
-            this.logger.error("Error during scroll:", error);
-            new Notice("❌ STOMP: Scroll error", 2000);
-        }
+        return this.scrollStrategies.has(commandId);
     }
 
     /**
@@ -140,13 +91,76 @@ export class ScrollController {
      */
     stopAllScrolling(): void {
         this.logger.debug("Stopping all scroll animations");
-        this.pageScroller.stopScroll();
-        this.quickPageScroller.stopScroll();
-        this.sectionScroller.stopScroll();
+        this.engine.stopAnimation();
     }
 
-    hasActiveView(): boolean {
+    /**
+     * Execute a scroll command by ID
+     */
+    async executeCommand(commandId: string): Promise<void> {
+        const strategy = this.scrollStrategies.get(commandId);
+
+        if (strategy) {
+            this.logger.debug(`Executing scroll command: ${commandId}`);
+            await this.executeScroll(strategy);
+        } else {
+            this.logger.warn(`Unknown command: ${commandId}`);
+        }
+    }
+
+    private async executeScroll(scroll: ScrollStrategy): Promise<void> {
+        const element = this.getScrollable();
+        if (!element) throw new Error("No scrollable element found");
+
+        try {
+            await scroll.execute(element);
+        } catch (error) {
+            this.logger.error("Error during scroll:", error);
+            new Notice("❌ STOMP: Scroll error", 2000);
+        }
+    }
+
+    private getScrollable(): HTMLElement | null {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
+
+        if (!activeView) {
+            this.logger.warn("No active view found");
+            return null;
+        }
+
+        const mode = activeView.currentMode;
+
+        if (!(mode instanceof MarkdownPreviewView)) {
+            this.logger.warn(`Unsupported mode: ${mode.constructor.name}`);
+            return activeView.containerEl;
+        }
+
+        const containerEl = mode.containerEl;
+
+        const candidates = [
+            ".markdown-preview-view",
+            ".markdown-preview-sizer",
+            ".view-content",
+            ".markdown-reading-view",
+            ".cm-scroller",
+        ];
+
+        for (const selector of candidates) {
+            const element = containerEl.querySelector(selector) as HTMLElement;
+            if (element && this.isScrollable(element)) {
+                return element;
+            }
+        }
+
+        this.logger.warn("No scrollable found; using fallback");
+
+        return containerEl;
+    }
+
+    private isScrollable(element: HTMLElement): boolean {
+        const style = window.getComputedStyle(element);
+        const hasScrollableContent = element.scrollHeight > element.clientHeight;
+        const hasScrollableStyle = style.overflowY === "scroll" || style.overflowY === "auto";
+        return hasScrollableContent && hasScrollableStyle;
     }
 }
