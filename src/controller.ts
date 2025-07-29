@@ -97,14 +97,14 @@ export class ScrollController {
     }
 
     /**
-     * Check if a command ID is valid
+     * Check if a command ID is valid for this controller.
      */
     isValidCommand(commandId: string): boolean {
         return this.scrollStrategies.has(commandId);
     }
 
     /**
-     * Stop all active scrolling
+     * Stop all active scrolling.
      */
     stopAllScrolling(): void {
         this.logger.debug("Stopping all scroll animations");
@@ -112,7 +112,7 @@ export class ScrollController {
     }
 
     /**
-     * Execute a scroll command by ID
+     * Execute a scroll command by ID on the active scrollable element.
      */
     async executeCommand(commandId: string): Promise<void> {
         const strategy = this.scrollStrategies.get(commandId);
@@ -125,7 +125,10 @@ export class ScrollController {
         }
     }
 
-    private async executeScroll(scroll: ViewScroller): Promise<void> {
+    /**
+     * Execute a specific scroll strategy on the active scrollable element.
+     */
+    async executeScroll(scroll: ViewScroller): Promise<void> {
         const element = this.getScrollable();
         if (!element) throw new Error("No scrollable element found");
 
