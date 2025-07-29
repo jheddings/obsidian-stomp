@@ -1,7 +1,7 @@
-import { Plugin, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
+import { MarkdownPreviewView, MarkdownView, Plugin } from "obsidian";
 import { StompSettingsTab } from "./settings";
 import { Logger, LogLevel } from "./logger";
-import { PageScroller, SectionScroller } from "./scroller";
+import { SCROLL_COMMANDS, ScrollController } from "./controller";
 import { findBindingByKey, StompPluginSettings } from "./config";
 
 const DEFAULT_SETTINGS: StompPluginSettings = {
@@ -27,34 +27,22 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
     },
 };
 
-export const PLUGIN_COMMANDS = [
-    { id: "stomp-page-scroll-up", name: "Scroll page up" },
-    { id: "stomp-page-scroll-down", name: "Scroll page down" },
-    { id: "stomp-section-scroll-next", name: "Scroll to next section" },
-    { id: "stomp-section-scroll-previous", name: "Scroll to previous section" },
-    { id: "stomp-quick-scroll-up", name: "Quick scroll up" },
-    { id: "stomp-quick-scroll-down", name: "Quick scroll down" },
-    { id: "stomp-stop-scroll", name: "Stop scrolling" },
-];
-
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
 
     private logger = Logger.getLogger("main");
-    private pageScroller: PageScroller;
-    private quickPageScroller: PageScroller;
-    private sectionScroller: SectionScroller;
+    private controller: ScrollController;
 
     async onload() {
         await this.loadSettings();
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        PLUGIN_COMMANDS.forEach((command) => {
+        SCROLL_COMMANDS.forEach((command) => {
             this.addCommand({
                 id: command.id,
                 name: command.name,
-                callback: () => this.executeCommand(command.id),
+                callback: () => this.controller.executeCommand(command.id),
             });
         });
 
@@ -72,25 +60,19 @@ export default class StompPlugin extends Plugin {
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
-        Logger.setGlobalLogLevel(this.settings.logLevel);
-
-        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
-
-        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
-
-        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
+        this.applySettings();
     }
 
     async saveSettings() {
         await this.saveData(this.settings);
 
+        this.applySettings();
+    }
+
+    private applySettings() {
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
-        this.quickPageScroller = new PageScroller(this.app, this.settings.quickScrollSettings);
-
-        this.pageScroller = new PageScroller(this.app, this.settings.pageScrollSettings);
-
-        this.sectionScroller = new SectionScroller(this.app, this.settings.sectionScrollSettings);
+        this.controller = new ScrollController(this.app, this.settings);
     }
 
     private handleKeyDown = (evt: KeyboardEvent) => {
@@ -98,13 +80,13 @@ export default class StompPlugin extends Plugin {
 
         const binding = findBindingByKey(this.settings, evt.key);
 
-        if (binding && this.isReadingView()) {
-            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
-
+        if (binding && this.hasActiveView()) {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
-            this.executeCommand(binding.commandId);
+
+            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
+            this.controller.executeCommand(binding.commandId);
 
             return false;
         }
@@ -112,61 +94,7 @@ export default class StompPlugin extends Plugin {
         return true;
     };
 
-    private executeCommand(commandId: string): void {
-        this.logger.debug(`Executing command: ${commandId}`);
-
-        switch (commandId) {
-            case "stomp-quick-scroll-up":
-                this.executeProtectedScroll(async () => {
-                    await this.quickPageScroller.scrollUp();
-                });
-                break;
-            case "stomp-quick-scroll-down":
-                this.executeProtectedScroll(async () => {
-                    await this.quickPageScroller.scrollDown();
-                });
-                break;
-            case "stomp-page-scroll-up":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollUp();
-                });
-                break;
-            case "stomp-page-scroll-down":
-                this.executeProtectedScroll(async () => {
-                    await this.pageScroller.scrollDown();
-                });
-                break;
-            case "stomp-section-scroll-next":
-                this.executeProtectedScroll(async () => {
-                    await this.sectionScroller.scrollToNext();
-                });
-                break;
-            case "stomp-section-scroll-previous":
-                this.executeProtectedScroll(async () => {
-                    await this.sectionScroller.scrollToPrevious();
-                });
-                break;
-            case "stomp-stop-scroll":
-                this.executeProtectedScroll(async () => {
-                    this.pageScroller.stopScroll();
-                    this.sectionScroller.stopScroll();
-                });
-                break;
-            default:
-                this.logger.warn(`Unknown command: ${commandId}`);
-        }
-    }
-
-    private async executeProtectedScroll(scrollFunc: () => Promise<void>): Promise<void> {
-        try {
-            await scrollFunc();
-        } catch (error) {
-            this.logger.error("Error during scroll:", error);
-            new Notice("❌ STOMP: Scroll error", 2000);
-        }
-    }
-
-    private isReadingView(): boolean {
+    hasActiveView(): boolean {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         return activeView && activeView.currentMode instanceof MarkdownPreviewView;
     }

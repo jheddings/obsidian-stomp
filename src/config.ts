@@ -1,15 +1,24 @@
 import { LogLevel } from "./logger";
 
+/**
+ * Represents a key binding for a command.
+ */
 export interface KeyBinding {
     commandId: string;
     key: string | null;
 }
 
+/**
+ * Settings for page scroll behavior.
+ */
 export interface PageScrollSettings {
     scrollAmount: number;
     scrollDuration: number;
 }
 
+/**
+ * Settings for section scroll behavior.
+ */
 export interface SectionScrollSettings {
     scrollDuration: number;
 
@@ -20,6 +29,9 @@ export interface SectionScrollSettings {
     stopAtCustom: string[];
 }
 
+/**
+ * Main plugin settings structure.
+ */
 export interface StompPluginSettings {
     commandBindings: KeyBinding[];
     pageScrollSettings: PageScrollSettings;
@@ -28,6 +40,10 @@ export interface StompPluginSettings {
     logLevel: LogLevel;
 }
 
+/**
+ * Gets the key binding for a command ID.
+ * @returns The key binding or undefined.
+ */
 export function getCommandBinding(
     settings: StompPluginSettings,
     commandId: string
@@ -35,6 +51,9 @@ export function getCommandBinding(
     return settings.commandBindings.find((binding) => binding.commandId === commandId);
 }
 
+/**
+ * Sets the key binding for a command ID.
+ */
 export function setCommandBinding(
     settings: StompPluginSettings,
     commandId: string,
@@ -50,6 +69,10 @@ export function setCommandBinding(
     }
 }
 
+/**
+ * Finds a key binding by key value.
+ * @returns The key binding or undefined.
+ */
 export function findBindingByKey(
     settings: StompPluginSettings,
     key: string

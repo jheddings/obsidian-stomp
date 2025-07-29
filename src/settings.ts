@@ -1,7 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
-import ObsidianStompPlugin, { PLUGIN_COMMANDS } from "./main";
 import { getCommandBinding, setCommandBinding } from "./config";
+import { SCROLL_COMMANDS } from "./controller";
+import ObsidianStompPlugin from "./main";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
@@ -17,21 +18,35 @@ export const AVAILABLE_KEYS = {
     Escape: "Escape",
 } as const;
 
+/**
+ * Base class for settings tab pages.
+ */
 abstract class SettingsTabPage {
     public isActive: boolean = false;
 
     protected _plugin: ObsidianStompPlugin;
     protected _name: string;
 
+    /**
+     * Creates a new SettingsTabPage instance.
+     */
     constructor(plugin: ObsidianStompPlugin, name: string) {
         this._plugin = plugin;
         this._name = name;
     }
 
+    /**
+     * Gets the tab page ID.
+     * @returns The tab page ID string.
+     */
     get id(): string {
         return this._name.toLowerCase().replace(/\s+/g, "-");
     }
 
+    /**
+     * Gets the tab page name.
+     * @returns The tab page name string.
+     */
     get name(): string {
         return this._name;
     }
@@ -39,15 +54,24 @@ abstract class SettingsTabPage {
     abstract display(containerEl: HTMLElement): void;
 }
 
+/**
+ * Settings page for key bindings.
+ */
 class KeyBindingSettings extends SettingsTabPage {
+    /**
+     * Creates a new KeyBindingSettings instance.
+     */
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Key Bindings");
     }
 
+    /**
+     * Displays the key binding settings UI.
+     */
     display(containerEl: HTMLElement): void {
         new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
-        PLUGIN_COMMANDS.forEach((command) => {
+        SCROLL_COMMANDS.forEach((command) => {
             const currentBinding = getCommandBinding(this._plugin.settings, command.id);
             const currentKey = currentBinding?.key || "";
 
@@ -73,11 +97,20 @@ class KeyBindingSettings extends SettingsTabPage {
     }
 }
 
+/**
+ * Settings page for page scrolling options.
+ */
 class PageScrollSettings extends SettingsTabPage {
+    /**
+     * Creates a new PageScrollSettings instance.
+     */
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Page Scrolling");
     }
 
+    /**
+     * Displays the page scroll settings UI.
+     */
     display(containerEl: HTMLElement): void {
         const pageSettings = this._plugin.settings.pageScrollSettings;
         const quickSettings = this._plugin.settings.quickScrollSettings;
@@ -136,11 +169,20 @@ class PageScrollSettings extends SettingsTabPage {
     }
 }
 
+/**
+ * Settings page for section scrolling options.
+ */
 class SectionScrollSettings extends SettingsTabPage {
+    /**
+     * Creates a new SectionScrollSettings instance.
+     */
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Section Scrolling");
     }
 
+    /**
+     * Displays the section scroll settings UI.
+     */
     display(containerEl: HTMLElement): void {
         const settings = this._plugin.settings.sectionScrollSettings;
 
@@ -209,11 +251,20 @@ class SectionScrollSettings extends SettingsTabPage {
     }
 }
 
+/**
+ * Settings page for advanced options.
+ */
 class AdvancedSettings extends SettingsTabPage {
+    /**
+     * Creates a new AdvancedSettings instance.
+     */
     constructor(plugin: ObsidianStompPlugin) {
         super(plugin, "Advanced");
     }
 
+    /**
+     * Displays the advanced settings UI.
+     */
     display(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName("Log Level")
@@ -263,9 +314,15 @@ class AdvancedSettings extends SettingsTabPage {
     }
 }
 
+/**
+ * Main settings tab for the plugin.
+ */
 export class StompSettingsTab extends PluginSettingTab {
     private tabs: SettingsTabPage[];
 
+    /**
+     * Creates a new StompSettingsTab instance.
+     */
     constructor(app: App, plugin: ObsidianStompPlugin) {
         super(app, plugin);
 
@@ -277,6 +334,9 @@ export class StompSettingsTab extends PluginSettingTab {
         ];
     }
 
+    /**
+     * Displays the settings tab UI.
+     */
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
@@ -313,6 +373,9 @@ export class StompSettingsTab extends PluginSettingTab {
         this.updateTabButtonStyles(tabContainer);
     }
 
+    /**
+     * Updates the styles for the tab buttons.
+     */
     private updateTabButtonStyles(tabContainer: HTMLElement): void {
         const tabButtons = tabContainer.querySelectorAll(".stomp-settings-tab-button");
 
