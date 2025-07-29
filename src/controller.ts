@@ -132,12 +132,16 @@ export class ScrollController {
         const element = this.getScrollable();
         if (!element) throw new Error("No scrollable element found");
 
+        this.engine.activate(element);
+
         try {
             await scroll.execute(element);
         } catch (error) {
             this.logger.error("Error during scroll:", error);
             new Notice("❌ STOMP: Scroll error", 2000);
         }
+
+        this.engine.deactivate();
     }
 
     private getScrollable(): HTMLElement | null {

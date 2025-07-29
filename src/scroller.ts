@@ -49,13 +49,9 @@ export class PageScrollerUp extends PageScroller {
     }
 
     async execute(element: HTMLElement): Promise<void> {
-        this.engine.activate(element);
-
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop - scrollAmount;
         await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
-
-        this.engine.deactivate();
     }
 }
 
@@ -66,13 +62,9 @@ export class PageScrollerDown extends PageScroller {
     }
 
     async execute(element: HTMLElement): Promise<void> {
-        this.engine.activate(element);
-
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop + scrollAmount;
         await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
-
-        this.engine.deactivate();
     }
 }
 
@@ -185,15 +177,11 @@ export class SectionScrollerNext extends SectionScroller {
     }
 
     async execute(element: HTMLElement): Promise<void> {
-        this.engine.activate(element);
-
         const targetElement = this.findNextSection(element);
 
         if (targetElement) {
             await this.scrollToElement(element, targetElement);
         }
-
-        this.engine.deactivate();
     }
 }
 
@@ -223,14 +211,10 @@ export class SectionScrollerPrev extends SectionScroller {
     }
 
     async execute(element: HTMLElement): Promise<void> {
-        this.engine.activate(element);
-
         const targetElement = this.findPreviousSection(element);
 
         if (targetElement) {
             await this.scrollToElement(element, targetElement);
         }
-
-        this.engine.deactivate();
     }
 }
