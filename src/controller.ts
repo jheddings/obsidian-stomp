@@ -11,12 +11,18 @@ import {
     ViewScroller,
 } from "./scroller";
 
+/**
+ * Represents a scroll command definition.
+ */
 export interface ScrollCommand {
     id: string;
     name: string;
     description?: string;
 }
 
+/**
+ * List of available scroll commands.
+ */
 export const SCROLL_COMMANDS: ScrollCommand[] = [
     {
         id: "stomp-page-scroll-up",
@@ -55,12 +61,18 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
     },
 ];
 
+/**
+ * Controls scroll actions and strategies for the plugin.
+ */
 export class ScrollController {
     private scrollStrategies: Map<string, ViewScroller> = new Map();
     private engine: ScrollEngine;
 
     private logger: LoggerInstance;
 
+    /**
+     * Create a new ScrollController instance.
+     */
     constructor(
         private app: App,
         settings: StompPluginSettings
@@ -97,28 +109,20 @@ export class ScrollController {
     }
 
     /**
-     * Check if a command ID is valid for this controller.
+     * Checks if a command ID is valid.
      */
     isValidCommand(commandId: string): boolean {
         return this.scrollStrategies.has(commandId);
     }
 
     /**
-     * Stop all active scrolling.
-     */
-    stopAllScrolling(): void {
-        this.logger.debug("Stopping all scroll animations");
-        this.engine.stopAnimation();
-    }
-
-    /**
-     * Execute a scroll command by ID on the active scrollable element.
+     * Executes a scroll command by ID on the active scrollable element.
      */
     async executeCommand(commandId: string): Promise<void> {
         const strategy = this.scrollStrategies.get(commandId);
 
         if (strategy) {
-            this.logger.debug(`Executing scroll command: ${commandId}`);
+            this.logger.info(`Executing command: ${commandId}`);
             await this.executeScroll(strategy);
         } else {
             this.logger.warn(`Unknown command: ${commandId}`);
@@ -126,7 +130,7 @@ export class ScrollController {
     }
 
     /**
-     * Execute a specific scroll strategy on the active scrollable element.
+     * Executes a specific scroll strategy on the active scrollable element.
      */
     async executeScroll(scroll: ViewScroller): Promise<void> {
         const element = this.getScrollable();
@@ -144,6 +148,10 @@ export class ScrollController {
         this.engine.deactivate();
     }
 
+    /**
+     * Gets the active scrollable element, or null if none found.
+     * @returns The scrollable HTMLElement or null.
+     */
     private getScrollable(): HTMLElement | null {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 
@@ -181,6 +189,9 @@ export class ScrollController {
         return containerEl;
     }
 
+    /**
+     * Determines if an element is scrollable.
+     */
     private isScrollable(element: HTMLElement): boolean {
         const style = window.getComputedStyle(element);
         const hasScrollableContent = element.scrollHeight > element.clientHeight;

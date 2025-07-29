@@ -1,5 +1,8 @@
 import { Logger, LoggerInstance } from "./logger";
 
+/**
+ * Handles scroll animation and state for scroll actions.
+ */
 export class ScrollEngine {
     private static readonly ANIMATION_FRAME_RATE = 60;
     private static readonly ANIMATION_FRAME_THRESHOLD = 5;
@@ -8,10 +11,16 @@ export class ScrollEngine {
     private animationId: NodeJS.Timeout | null = null;
     private activeElement: HTMLElement | null = null;
 
+    /**
+     * Creates a new ScrollEngine instance.
+     */
     constructor() {
         this.logger = Logger.getLogger("ScrollEngine");
     }
 
+    /**
+     * Activates the given element for scrolling.
+     */
     activate(element: HTMLElement): void {
         if (this.activeElement) {
             this.logger.warn("Existing active element; deactivating");
@@ -23,6 +32,9 @@ export class ScrollEngine {
         this.logger.debug(`Activated element: ${element.tagName}#${element.id}`);
     }
 
+    /**
+     * Deactivates the current active element.
+     */
     deactivate(): void {
         if (!this.activeElement) {
             this.logger.warn("No active element");
@@ -36,6 +48,9 @@ export class ScrollEngine {
         this.logger.debug(`Deactivated element: ${elementInfo}`);
     }
 
+    /**
+     * Stops any ongoing scroll animation.
+     */
     stopAnimation(): void {
         if (this.animationId !== null) {
             clearTimeout(this.animationId);
@@ -44,6 +59,9 @@ export class ScrollEngine {
         }
     }
 
+    /**
+     * Animates scrolling to the target position over a duration.
+     */
     async animatedScroll(targetTop: number, durationMs: number): Promise<void> {
         this.stopAnimation();
 
@@ -106,6 +124,9 @@ export class ScrollEngine {
         });
     }
 
+    /**
+     * Instantly scrolls to the target position.
+     */
     directScroll(targetTop: number) {
         if (!this.activeElement) {
             throw new Error("No active element");

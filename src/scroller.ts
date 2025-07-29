@@ -2,30 +2,54 @@ import { PageScrollSettings, SectionScrollSettings } from "./config";
 import { ScrollEngine } from "./engine";
 import { Logger, LoggerInstance } from "./logger";
 
+/**
+ * Base class for scroll strategies.
+ */
 export abstract class ViewScroller {
     protected logger: LoggerInstance;
 
+    /**
+     * Creates a new ViewScroller instance.
+     */
     constructor(protected engine: ScrollEngine) {
         this.logger = Logger.getLogger("ViewScroller");
     }
 
+    /**
+     * Executes the scroll strategy.
+     */
     abstract execute(element: HTMLElement): Promise<void>;
 }
 
+/**
+ * Stops any active scroll animation.
+ */
 export class ScrollStopper extends ViewScroller {
+    /**
+     * Creates a new ScrollStopper instance.
+     */
     constructor(engine: ScrollEngine) {
         super(engine);
         this.logger = Logger.getLogger("ScrollStopper");
     }
 
+    /**
+     * Executes the stop scroll action.
+     */
     async execute(_element: HTMLElement): Promise<void> {
         this.engine.stopAnimation();
     }
 }
 
+/**
+ * Base class for page scroll strategies.
+ */
 abstract class PageScroller extends ViewScroller {
     protected options: PageScrollSettings;
 
+    /**
+     * Creates a new PageScroller instance.
+     */
     constructor(engine: ScrollEngine, options: PageScrollSettings) {
         super(engine);
 
@@ -33,21 +57,38 @@ abstract class PageScroller extends ViewScroller {
         this.logger = Logger.getLogger("PageScroller");
     }
 
+    /**
+     * Gets the scroll duration in milliseconds.
+     * @returns The scroll duration in ms.
+     */
     get scrollDurationMs(): number {
         return this.options.scrollDuration * 1000;
     }
 
+    /**
+     * Gets the scroll size in pixels.
+     * @returns The scroll size in pixels.
+     */
     protected getScrollSizePx(element: HTMLElement): number {
         return (this.options.scrollAmount / 100) * element.clientHeight;
     }
 }
 
+/**
+ * Scrolls the page up by a set amount.
+ */
 export class PageScrollerUp extends PageScroller {
+    /**
+     * Creates a new PageScrollerUp instance.
+     */
     constructor(engine: ScrollEngine, options: PageScrollSettings) {
         super(engine, options);
         this.logger = Logger.getLogger("PageScrollerUp");
     }
 
+    /**
+     * Executes the scroll up action.
+     */
     async execute(element: HTMLElement): Promise<void> {
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop - scrollAmount;
@@ -55,12 +96,21 @@ export class PageScrollerUp extends PageScroller {
     }
 }
 
+/**
+ * Scrolls the page down by a set amount.
+ */
 export class PageScrollerDown extends PageScroller {
+    /**
+     * Creates a new PageScrollerDown instance.
+     */
     constructor(engine: ScrollEngine, options: PageScrollSettings) {
         super(engine, options);
         this.logger = Logger.getLogger("PageScrollerDown");
     }
 
+    /**
+     * Executes the scroll down action.
+     */
     async execute(element: HTMLElement): Promise<void> {
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop + scrollAmount;
@@ -68,12 +118,18 @@ export class PageScrollerDown extends PageScroller {
     }
 }
 
+/**
+ * Base class for section scroll strategies.
+ */
 abstract class SectionScroller extends ViewScroller {
     static readonly SECTION_MINIMUM_GAP = 5;
 
     private options: SectionScrollSettings;
     private stopSelectors: string[] = [];
 
+    /**
+     * Creates a new SectionScroller instance.
+     */
     constructor(engine: ScrollEngine, options: SectionScrollSettings) {
         super(engine);
 
@@ -83,10 +139,17 @@ abstract class SectionScroller extends ViewScroller {
         this.buildElementSelectors(options);
     }
 
+    /**
+     * Gets the scroll duration in milliseconds.
+     * @returns The scroll duration in ms.
+     */
     get scrollDurationMs(): number {
         return this.options.scrollDuration * 1000;
     }
 
+    /**
+     * Scrolls to the specified element in the container.
+     */
     protected async scrollToElement(container: HTMLElement, target: HTMLElement): Promise<void> {
         this.logger.debug(`Section scroll target: ${target.tagName}.${target.className}`);
 
@@ -94,6 +157,9 @@ abstract class SectionScroller extends ViewScroller {
         await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
     }
 
+    /**
+     * Builds the list of element selectors for section stops.
+     */
     private buildElementSelectors(options: SectionScrollSettings): void {
         this.stopSelectors = [];
 
@@ -116,6 +182,10 @@ abstract class SectionScroller extends ViewScroller {
         this.logger.debug(`Section elements: [${this.stopSelectors.join(", ")}]`);
     }
 
+    /**
+     * Gets all section elements in the container.
+     * @returns An array of section HTMLElements.
+     */
     protected getSectionElements(container: HTMLElement): HTMLElement[] {
         const elements: HTMLElement[] = [];
 
@@ -129,6 +199,8 @@ abstract class SectionScroller extends ViewScroller {
             });
         }
 
+        this.logger.debug(`Found ${elements.length} stop elements in container`);
+
         // sort by document position
         return elements.sort((a, b) => {
             const position = a.compareDocumentPosition(b);
@@ -141,6 +213,10 @@ abstract class SectionScroller extends ViewScroller {
         });
     }
 
+    /**
+     * Gets the scroll position for an element within the container.
+     * @returns The scroll position in pixels.
+     */
     protected getElementScrollPosition(container: HTMLElement, element: HTMLElement): number {
         const containerRect = container.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
@@ -151,12 +227,22 @@ abstract class SectionScroller extends ViewScroller {
     }
 }
 
+/**
+ * Scrolls to the next section element.
+ */
 export class SectionScrollerNext extends SectionScroller {
+    /**
+     * Creates a new SectionScrollerNext instance.
+     */
     constructor(engine: ScrollEngine, options: SectionScrollSettings) {
         super(engine, options);
         this.logger = Logger.getLogger("SectionScrollerNext");
     }
 
+    /**
+     * Finds the next section element after the current scroll position.
+     * @returns The next section HTMLElement or null.
+     */
     private findNextSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
         const currentTop = container.scrollTop;
@@ -175,6 +261,9 @@ export class SectionScrollerNext extends SectionScroller {
         return null;
     }
 
+    /**
+     * Executes the scroll to next section action.
+     */
     async execute(element: HTMLElement): Promise<void> {
         const targetElement = this.findNextSection(element);
 
@@ -184,12 +273,22 @@ export class SectionScrollerNext extends SectionScroller {
     }
 }
 
+/**
+ * Scrolls to the previous section element.
+ */
 export class SectionScrollerPrev extends SectionScroller {
+    /**
+     * Creates a new SectionScrollerPrev instance.
+     */
     constructor(engine: ScrollEngine, options: SectionScrollSettings) {
         super(engine, options);
-        this.logger = Logger.getLogger("SectionScrollerPrevious");
+        this.logger = Logger.getLogger("SectionScrollerPrev");
     }
 
+    /**
+     * Finds the previous section element before the current scroll position.
+     * @returns The previous section HTMLElement or null.
+     */
     private findPreviousSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
         const currentTop = container.scrollTop;
@@ -209,6 +308,9 @@ export class SectionScrollerPrev extends SectionScroller {
         return null;
     }
 
+    /**
+     * Executes the scroll to previous section action.
+     */
     async execute(element: HTMLElement): Promise<void> {
         const targetElement = this.findPreviousSection(element);
 
