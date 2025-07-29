@@ -119,6 +119,7 @@ abstract class SectionScroller extends ViewScroller {
     protected getSectionElements(container: HTMLElement): HTMLElement[] {
         const elements: HTMLElement[] = [];
 
+        // find all elements matching the stop selectors
         for (const selector of this.stopSelectors) {
             const found = container.querySelectorAll(selector);
             found.forEach((el) => {
@@ -128,8 +129,8 @@ abstract class SectionScroller extends ViewScroller {
             });
         }
 
-        // Sort by document position
-        elements.sort((a, b) => {
+        // sort by document position
+        return elements.sort((a, b) => {
             const position = a.compareDocumentPosition(b);
             if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
                 return -1;
@@ -138,8 +139,6 @@ abstract class SectionScroller extends ViewScroller {
             }
             return 0;
         });
-
-        return elements;
     }
 
     protected getElementScrollPosition(container: HTMLElement, element: HTMLElement): number {
