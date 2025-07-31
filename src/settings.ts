@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import { LogLevel } from "./logger";
 import { getCommandBinding, setCommandBinding } from "./config";
 import { SCROLL_COMMANDS } from "./controller";
-import ObsidianStompPlugin from "./main";
+import StompPlugin from "./main";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
@@ -24,13 +24,13 @@ export const AVAILABLE_KEYS = {
 abstract class SettingsTabPage {
     public isActive: boolean = false;
 
-    protected _plugin: ObsidianStompPlugin;
+    protected _plugin: StompPlugin;
     protected _name: string;
 
     /**
      * Creates a new SettingsTabPage instance.
      */
-    constructor(plugin: ObsidianStompPlugin, name: string) {
+    constructor(plugin: StompPlugin, name: string) {
         this._plugin = plugin;
         this._name = name;
     }
@@ -61,7 +61,7 @@ class KeyBindingSettings extends SettingsTabPage {
     /**
      * Creates a new KeyBindingSettings instance.
      */
-    constructor(plugin: ObsidianStompPlugin) {
+    constructor(plugin: StompPlugin) {
         super(plugin, "Key Bindings");
     }
 
@@ -104,7 +104,7 @@ class PageScrollSettings extends SettingsTabPage {
     /**
      * Creates a new PageScrollSettings instance.
      */
-    constructor(plugin: ObsidianStompPlugin) {
+    constructor(plugin: StompPlugin) {
         super(plugin, "Page Scrolling");
     }
 
@@ -176,7 +176,7 @@ class SectionScrollSettings extends SettingsTabPage {
     /**
      * Creates a new SectionScrollSettings instance.
      */
-    constructor(plugin: ObsidianStompPlugin) {
+    constructor(plugin: StompPlugin) {
         super(plugin, "Section Scrolling");
     }
 
@@ -258,7 +258,7 @@ class AdvancedSettings extends SettingsTabPage {
     /**
      * Creates a new AdvancedSettings instance.
      */
-    constructor(plugin: ObsidianStompPlugin) {
+    constructor(plugin: StompPlugin) {
         super(plugin, "Advanced");
     }
 
@@ -323,7 +323,7 @@ export class StompSettingsTab extends PluginSettingTab {
     /**
      * Creates a new StompSettingsTab instance.
      */
-    constructor(app: App, plugin: ObsidianStompPlugin) {
+    constructor(app: App, plugin: StompPlugin) {
         super(app, plugin);
 
         this.tabs = [
