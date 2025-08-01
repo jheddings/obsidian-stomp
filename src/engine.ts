@@ -1,4 +1,6 @@
-import { Logger, LoggerInstance } from "./logger";
+// engine.ts - handles scroll animation and state for scroll actions
+
+import { Logger } from "./logger";
 
 /**
  * Handles scroll animation and state for scroll actions.
@@ -7,16 +9,9 @@ export class ScrollEngine {
     private static readonly ANIMATION_FRAME_RATE = 60;
     private static readonly ANIMATION_FRAME_THRESHOLD = 5;
 
-    private logger: LoggerInstance;
+    private logger: Logger = Logger.getLogger("ScrollEngine");
     private animationId: NodeJS.Timeout | null = null;
     private activeElement: HTMLElement | null = null;
-
-    /**
-     * Creates a new ScrollEngine instance.
-     */
-    constructor() {
-        this.logger = Logger.getLogger("ScrollEngine");
-    }
 
     /**
      * Activates the given element for scrolling.

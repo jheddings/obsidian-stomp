@@ -1,7 +1,7 @@
 import { App, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { StompPluginSettings } from "./config";
 import { ScrollEngine } from "./engine";
-import { Logger, LoggerInstance } from "./logger";
+import { Logger } from "./logger";
 import {
     PageScrollerDown,
     PageScrollerUp,
@@ -66,9 +66,9 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
  */
 export class ScrollController {
     private scrollStrategies: Map<string, ViewScroller> = new Map();
-    private engine: ScrollEngine;
 
-    private logger: LoggerInstance;
+    private engine: ScrollEngine = new ScrollEngine();
+    private logger: Logger = Logger.getLogger("ScrollController");
 
     /**
      * Create a new ScrollController instance.
@@ -77,9 +77,6 @@ export class ScrollController {
         private app: App,
         settings: StompPluginSettings
     ) {
-        this.logger = Logger.getLogger("ScrollController");
-        this.engine = new ScrollEngine();
-
         this.scrollStrategies.set("stomp-stop-scroll", new ScrollStopper(this.engine));
 
         this.scrollStrategies.set(
