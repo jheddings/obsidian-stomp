@@ -77,22 +77,26 @@ export default class StompPlugin extends Plugin {
     }
 
     private handleKeyDown = (evt: KeyboardEvent) => {
+        if (!this.hasActiveView()) {
+            return true;
+        }
+
         this.logger.debug(`Received key event: ${evt.key}`);
 
         const binding = findBindingByKey(this.settings, evt.key);
 
-        if (binding && this.hasActiveView()) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            evt.stopImmediatePropagation();
-
-            this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
-            this.controller.executeCommand(binding.commandId);
-
-            return false;
+        if (!binding) {
+            return true;
         }
 
-        return true;
+        evt.preventDefault();
+        evt.stopPropagation();
+        evt.stopImmediatePropagation();
+
+        this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
+        this.controller.executeCommand(binding.commandId);
+
+        return false;
     };
 
     hasActiveView(): boolean {
