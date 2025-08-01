@@ -55,6 +55,32 @@ export class ScrollEngine {
     }
 
     /**
+     * Instantly scrolls to the target position.
+     */
+    directScroll(targetTop: number) {
+        if (!this.activeElement) {
+            throw new Error("No active element");
+        }
+
+        const currentTop = this.activeElement.scrollTop;
+        const clampedTarget = Math.ceil(Math.max(targetTop, 0));
+
+        this.logger.debug(`Scrolling from ${currentTop} to ${clampedTarget}`);
+
+        this.activeElement.scrollTop = clampedTarget;
+
+        const newTop = this.activeElement.scrollTop;
+
+        if (newTop === 0) {
+            this.logger.debug("Reached top of document");
+        } else if (newTop === currentTop) {
+            this.logger.debug("Reached end of document");
+        } else {
+            this.logger.debug(`Scroll successful: ${currentTop} -> ${newTop}`);
+        }
+    }
+
+    /**
      * Animates scrolling to the target position over a duration.
      */
     async animatedScroll(targetTop: number, durationMs: number): Promise<void> {
@@ -120,28 +146,60 @@ export class ScrollEngine {
     }
 
     /**
-     * Instantly scrolls to the target position.
+     * Starts continuous scrolling at a given speed in pixels per second.
+     * @param direction - 1 for down, -1 for up
+     * @param pixelsPerSecond - scroll speed in pixels per second
      */
-    directScroll(targetTop: number) {
+    async continuousScroll(direction: number, pixelsPerSecond: number): Promise<void> {
+        this.stopAnimation();
+
         if (!this.activeElement) {
             throw new Error("No active element");
         }
 
-        const currentTop = this.activeElement.scrollTop;
-        const clampedTarget = Math.ceil(Math.max(targetTop, 0));
+        const frameInterval = 1000 / ScrollEngine.ANIMATION_FRAME_RATE;
+        const pixelsPerFrame = ((pixelsPerSecond * frameInterval) / 1000) * direction;
 
-        this.logger.debug(`Scrolling from ${currentTop} to ${clampedTarget}`);
+        this.logger.debug(
+            `Starting continuous scroll: ${pixelsPerSecond}px/s, ${pixelsPerFrame}px/frame`
+        );
 
-        this.activeElement.scrollTop = clampedTarget;
+        return new Promise((resolve) => {
+            const animate = () => {
+                if (!this.activeElement) {
+                    resolve();
+                    return;
+                }
 
-        const newTop = this.activeElement.scrollTop;
+                const currentTop = this.activeElement.scrollTop;
+                const newPosition = currentTop + pixelsPerFrame;
 
-        if (newTop === 0) {
-            this.logger.debug("Reached top of document");
-        } else if (newTop === currentTop) {
-            this.logger.debug("Reached end of document");
-        } else {
-            this.logger.debug(`Scroll successful: ${currentTop} -> ${newTop}`);
-        }
+                const maxScrollTop =
+                    this.activeElement.scrollHeight - this.activeElement.clientHeight;
+
+                if (
+                    (direction > 0 && currentTop >= maxScrollTop) ||
+                    (direction < 0 && currentTop <= 0)
+                ) {
+                    this.logger.debug("Continuous scroll reached document boundary");
+                    this.animationId = null;
+                    resolve();
+                    return;
+                }
+
+                this.directScroll(newPosition);
+
+                // Continue scrolling if we haven't reached the boundary
+                if (this.activeElement.scrollTop !== currentTop) {
+                    this.animationId = setTimeout(animate, frameInterval);
+                } else {
+                    this.logger.debug("Continuous scroll stopped - no movement detected");
+                    this.animationId = null;
+                    resolve();
+                }
+            };
+
+            this.animationId = setTimeout(animate, frameInterval);
+        });
     }
 }

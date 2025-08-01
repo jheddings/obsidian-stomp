@@ -1,4 +1,4 @@
-import { PageScrollSettings, SectionScrollSettings } from "./config";
+import { PageScrollSettings, SectionScrollSettings, AutoScrollSettings } from "./config";
 import { ScrollEngine } from "./engine";
 import { Logger } from "./logger";
 
@@ -315,5 +315,70 @@ export class SectionScrollerPrev extends SectionScroller {
         if (targetElement) {
             await this.scrollToElement(element, targetElement);
         }
+    }
+}
+
+/**
+ * Base class for auto scroll strategies.
+ */
+abstract class AutoScroller extends ViewScroller {
+    protected options: AutoScrollSettings;
+
+    /**
+     * Creates a new AutoScroller instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine);
+
+        this.options = options;
+        this.logger = Logger.getLogger("AutoScroller");
+    }
+
+    /**
+     * Gets the scroll speed in pixels per second.
+     * @returns The scroll speed in pixels per second.
+     */
+    get scrollSpeedPxPerSec(): number {
+        return this.options.scrollSpeed;
+    }
+}
+
+/**
+ * Continuously scrolls up at a set speed until reaching the top or stopped.
+ */
+export class AutoScrollerUp extends AutoScroller {
+    /**
+     * Creates a new AutoScrollerUp instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("AutoScrollerUp");
+    }
+
+    /**
+     * Executes the continuous scroll up action.
+     */
+    async execute(_element: HTMLElement): Promise<void> {
+        await this.engine.continuousScroll(-1, this.scrollSpeedPxPerSec);
+    }
+}
+
+/**
+ * Continuously scrolls down at a set speed until reaching the bottom or stopped.
+ */
+export class AutoScrollerDown extends AutoScroller {
+    /**
+     * Creates a new AutoScrollerDown instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("AutoScrollerDown");
+    }
+
+    /**
+     * Executes the continuous scroll down action.
+     */
+    async execute(_element: HTMLElement): Promise<void> {
+        await this.engine.continuousScroll(1, this.scrollSpeedPxPerSec);
     }
 }

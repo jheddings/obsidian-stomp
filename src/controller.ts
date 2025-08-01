@@ -8,6 +8,8 @@ import {
     ScrollStopper,
     SectionScrollerNext,
     SectionScrollerPrev,
+    AutoScrollerUp,
+    AutoScrollerDown,
     ViewScroller,
 } from "./scroller";
 
@@ -59,6 +61,16 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         name: "Stop scrolling",
         description: "Stop any active scroll animation",
     },
+    {
+        id: "stomp-auto-scroll-up",
+        name: "Auto scroll up",
+        description: "Continuously scroll up at a set speed",
+    },
+    {
+        id: "stomp-auto-scroll-down",
+        name: "Auto scroll down",
+        description: "Continuously scroll down at a set speed",
+    },
 ];
 
 /**
@@ -102,6 +114,14 @@ export class ScrollController {
         this.scrollStrategies.set(
             "stomp-section-scroll-prev",
             new SectionScrollerPrev(this.engine, settings.sectionScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-auto-scroll-up",
+            new AutoScrollerUp(this.engine, settings.autoScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-auto-scroll-down",
+            new AutoScrollerDown(this.engine, settings.autoScrollSettings)
         );
     }
 

@@ -30,6 +30,13 @@ export interface SectionScrollSettings {
 }
 
 /**
+ * Settings for auto scroll behavior.
+ */
+export interface AutoScrollSettings {
+    scrollSpeed: number; // pixels per second
+}
+
+/**
  * Main plugin settings structure.
  */
 export interface StompPluginSettings {
@@ -37,6 +44,7 @@ export interface StompPluginSettings {
     pageScrollSettings: PageScrollSettings;
     quickScrollSettings: PageScrollSettings;
     sectionScrollSettings: SectionScrollSettings;
+    autoScrollSettings: AutoScrollSettings;
     logLevel: LogLevel;
 }
 
