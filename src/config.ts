@@ -33,7 +33,7 @@ export interface SectionScrollSettings {
  * Settings for auto scroll behavior.
  */
 export interface AutoScrollSettings {
-    scrollSpeed: number; // pixels per second
+    scrollSpeed: number;
 }
 
 /**
