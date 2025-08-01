@@ -89,10 +89,63 @@ export class ScrollEngine {
         }
     }
 
+    async animatedScroll(
+        frameInterval: number,
+        pixelsPerFrame: number,
+        totalFrames: number
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            let currentPosition = this.activeElement.scrollTop;
+            let framesProcessed = 0;
+
+            const startTime = performance.now();
+
+            const finalize = (logMessage: string) => {
+                const elapsedTime = performance.now() - startTime;
+                this.logger.debug(
+                    `${logMessage} (${framesProcessed} frames, ${elapsedTime.toFixed(2)}ms)`
+                );
+                this.animationId = null;
+                resolve();
+            };
+
+            const animate = () => {
+                const previousPosition = this.activeElement.scrollTop;
+                const nextPosition = currentPosition + pixelsPerFrame;
+
+                this.logger.debug(
+                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
+                );
+
+                currentPosition = nextPosition;
+                this.directScroll(currentPosition);
+
+                // check if we've reached a document limit
+                const actualPosition = this.activeElement.scrollTop;
+                if (actualPosition === previousPosition) {
+                    finalize(`Scroll stopped @ ${actualPosition}`);
+                    return;
+                }
+
+                framesProcessed++;
+
+                // check if we've completed all frames
+                if (totalFrames >= 0 && framesProcessed >= totalFrames) {
+                    finalize("Animation completed");
+                    return;
+                }
+
+                this.animationId = setTimeout(animate, frameInterval);
+            };
+
+            this.animationId = setTimeout(animate, frameInterval);
+        });
+    }
+
     /**
-     * Animates scrolling to the target position over a duration.
+     * Animates scrolling to the target position over a given duration.
      */
-    async animatedScroll(targetTop: number, durationMs: number): Promise<void> {
+    async smoothTargetScroll(targetTop: number, durationMs: number): Promise<void> {
         this.stopAnimation();
 
         if (!this.activeElement) {
@@ -114,50 +167,11 @@ export class ScrollEngine {
 
         this.logger.debug(`Frame info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
 
-        return new Promise((resolve) => {
-            let currentPosition = this.activeElement.scrollTop;
-            const startTime = performance.now();
-
-            const finalize = (logMessage: string) => {
-                const elapsedTime = performance.now() - startTime;
-                this.logger.debug(`${logMessage} (${elapsedTime.toFixed(2)}ms)`);
-                this.animationId = null;
-                resolve();
-            };
-
-            const animate = () => {
-                const nextPosition = currentPosition + pixelsPerFrame;
-                const remainingDistance = Math.abs(clampedTop - nextPosition);
-
-                this.logger.debug(
-                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
-                );
-
-                if (remainingDistance <= ScrollEngine.ANIMATION_FRAME_THRESHOLD) {
-                    this.directScroll(clampedTop);
-                    finalize(`Scroll stopped @ ${clampedTop}`);
-                    return;
-                }
-
-                currentPosition = nextPosition;
-                this.directScroll(currentPosition);
-
-                if (this.activeElement.scrollTop === clampedTop) {
-                    finalize("Animation completed");
-                    return;
-                }
-
-                this.animationId = setTimeout(animate, frameInterval);
-            };
-
-            this.animationId = setTimeout(animate, frameInterval);
-        });
+        await this.animatedScroll(frameInterval, pixelsPerFrame, totalFrames);
     }
 
     /**
      * Starts continuous scrolling at a given speed in pixels per second.
-     * @param direction - 1 for down, -1 for up
-     * @param pixelsPerSecond - scroll speed in pixels per second
      */
     async continuousScroll(direction: ScrollDirection, pixelsPerSecond: number): Promise<void> {
         this.stopAnimation();
@@ -173,42 +187,6 @@ export class ScrollEngine {
             `Starting continuous scroll: ${pixelsPerSecond}px/s, ${pixelsPerFrame}px/frame`
         );
 
-        return new Promise((resolve) => {
-            const animate = () => {
-                if (!this.activeElement) {
-                    resolve();
-                    return;
-                }
-
-                const currentTop = this.activeElement.scrollTop;
-                const newPosition = currentTop + pixelsPerFrame;
-
-                const maxScrollTop =
-                    this.activeElement.scrollHeight - this.activeElement.clientHeight;
-
-                if (
-                    (direction > 0 && currentTop >= maxScrollTop) ||
-                    (direction < 0 && currentTop <= 0)
-                ) {
-                    this.logger.debug("Continuous scroll reached document boundary");
-                    this.animationId = null;
-                    resolve();
-                    return;
-                }
-
-                this.directScroll(newPosition);
-
-                // Continue scrolling if we haven't reached the boundary
-                if (this.activeElement.scrollTop !== currentTop) {
-                    this.animationId = setTimeout(animate, frameInterval);
-                } else {
-                    this.logger.debug("Continuous scroll stopped - no movement detected");
-                    this.animationId = null;
-                    resolve();
-                }
-            };
-
-            this.animationId = setTimeout(animate, frameInterval);
-        });
+        await this.animatedScroll(frameInterval, pixelsPerFrame, 0);
     }
 }
