@@ -30,8 +30,9 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
 
-    private logger = Logger.getLogger("main");
     private controller: ScrollController;
+
+    private logger: Logger = Logger.getLogger("main");
 
     async onload() {
         await this.loadSettings();

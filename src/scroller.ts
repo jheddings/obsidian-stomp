@@ -1,19 +1,17 @@
 import { PageScrollSettings, SectionScrollSettings } from "./config";
 import { ScrollEngine } from "./engine";
-import { Logger, LoggerInstance } from "./logger";
+import { Logger } from "./logger";
 
 /**
  * Base class for scroll strategies.
  */
 export abstract class ViewScroller {
-    protected logger: LoggerInstance;
+    protected logger: Logger = Logger.getLogger("ViewScroller");
 
     /**
      * Creates a new ViewScroller instance.
      */
-    constructor(protected engine: ScrollEngine) {
-        this.logger = Logger.getLogger("ViewScroller");
-    }
+    constructor(protected engine: ScrollEngine) {}
 
     /**
      * Executes the scroll strategy.
