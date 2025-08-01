@@ -11,6 +11,7 @@ import {
     AutoScrollerUp,
     AutoScrollerDown,
     ViewScroller,
+    ScrollToggler,
 } from "./scroller";
 
 /**
@@ -71,6 +72,16 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         name: "Auto scroll down",
         description: "Continuously scroll down at a set speed",
     },
+    {
+        id: "stomp-toggle-auto-scroll-up",
+        name: "Toggle auto scroll up",
+        description: "Toggles auto scrolling up",
+    },
+    {
+        id: "stomp-toggle-auto-scroll-down",
+        name: "Toggle auto scroll down",
+        description: "Toggles auto scrolling down",
+    },
 ];
 
 /**
@@ -115,13 +126,19 @@ export class ScrollController {
             "stomp-section-scroll-prev",
             new SectionScrollerPrev(this.engine, settings.sectionScrollSettings)
         );
+
+        const autoScrollUp = new AutoScrollerUp(this.engine, settings.autoScrollSettings);
+        this.scrollStrategies.set("stomp-auto-scroll-up", autoScrollUp);
         this.scrollStrategies.set(
-            "stomp-auto-scroll-up",
-            new AutoScrollerUp(this.engine, settings.autoScrollSettings)
+            "stomp-toggle-auto-scroll-up",
+            new ScrollToggler(this.engine, autoScrollUp)
         );
+
+        const autoScrollDown = new AutoScrollerDown(this.engine, settings.autoScrollSettings);
+        this.scrollStrategies.set("stomp-auto-scroll-down", autoScrollDown);
         this.scrollStrategies.set(
-            "stomp-auto-scroll-down",
-            new AutoScrollerDown(this.engine, settings.autoScrollSettings)
+            "stomp-toggle-auto-scroll-down",
+            new ScrollToggler(this.engine, autoScrollDown)
         );
     }
 

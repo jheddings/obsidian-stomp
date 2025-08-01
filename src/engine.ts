@@ -2,6 +2,11 @@
 
 import { Logger } from "./logger";
 
+export enum ScrollDirection {
+    UP = -1,
+    DOWN = 1,
+}
+
 /**
  * Handles scroll animation and state for scroll actions.
  */
@@ -12,6 +17,10 @@ export class ScrollEngine {
     private logger: Logger = Logger.getLogger("ScrollEngine");
     private animationId: NodeJS.Timeout | null = null;
     private activeElement: HTMLElement | null = null;
+
+    get isActive(): boolean {
+        return this.activeElement !== null && this.animationId !== null;
+    }
 
     /**
      * Activates the given element for scrolling.
@@ -150,7 +159,7 @@ export class ScrollEngine {
      * @param direction - 1 for down, -1 for up
      * @param pixelsPerSecond - scroll speed in pixels per second
      */
-    async continuousScroll(direction: number, pixelsPerSecond: number): Promise<void> {
+    async continuousScroll(direction: ScrollDirection, pixelsPerSecond: number): Promise<void> {
         this.stopAnimation();
 
         if (!this.activeElement) {

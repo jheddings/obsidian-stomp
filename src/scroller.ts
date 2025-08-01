@@ -1,5 +1,5 @@
 import { PageScrollSettings, SectionScrollSettings, AutoScrollSettings } from "./config";
-import { ScrollEngine } from "./engine";
+import { ScrollDirection, ScrollEngine } from "./engine";
 import { Logger } from "./logger";
 
 /**
@@ -338,7 +338,7 @@ abstract class AutoScroller extends ViewScroller {
      * Gets the scroll speed in pixels per second.
      * @returns The scroll speed in pixels per second.
      */
-    get scrollSpeedPxPerSec(): number {
+    get scrollSpeed(): number {
         return this.options.scrollSpeed;
     }
 }
@@ -352,6 +352,7 @@ export class AutoScrollerUp extends AutoScroller {
      */
     constructor(engine: ScrollEngine, options: AutoScrollSettings) {
         super(engine, options);
+
         this.logger = Logger.getLogger("AutoScrollerUp");
     }
 
@@ -359,7 +360,7 @@ export class AutoScrollerUp extends AutoScroller {
      * Executes the continuous scroll up action.
      */
     async execute(_element: HTMLElement): Promise<void> {
-        await this.engine.continuousScroll(-1, this.scrollSpeedPxPerSec);
+        await this.engine.continuousScroll(ScrollDirection.UP, this.scrollSpeed);
     }
 }
 
@@ -372,6 +373,7 @@ export class AutoScrollerDown extends AutoScroller {
      */
     constructor(engine: ScrollEngine, options: AutoScrollSettings) {
         super(engine, options);
+
         this.logger = Logger.getLogger("AutoScrollerDown");
     }
 
@@ -379,6 +381,36 @@ export class AutoScrollerDown extends AutoScroller {
      * Executes the continuous scroll down action.
      */
     async execute(_element: HTMLElement): Promise<void> {
-        await this.engine.continuousScroll(1, this.scrollSpeedPxPerSec);
+        await this.engine.continuousScroll(ScrollDirection.DOWN, this.scrollSpeed);
+    }
+}
+
+/**
+ * Wraps an existing scroller to toggle scrolling on and off.
+ */
+export class ScrollToggler extends ViewScroller {
+    /**
+     * Creates a new ScrollToggler instance.
+     */
+    constructor(
+        engine: ScrollEngine,
+        private scroller: ViewScroller
+    ) {
+        super(engine);
+
+        this.logger = Logger.getLogger("ScrollToggler");
+    }
+
+    /**
+     * Toggles the scrolling behavior of the wrapped scroller.
+     */
+    async execute(element: HTMLElement): Promise<void> {
+        if (this.engine.isActive) {
+            this.logger.debug("Stopping auto scroll");
+            await this.engine.stopAnimation();
+        } else {
+            this.logger.debug("Starting auto scroll");
+            await this.scroller.execute(element);
+        }
     }
 }
