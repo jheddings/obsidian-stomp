@@ -268,11 +268,16 @@ class AutoScrollSettings extends SettingsTabPage {
     display(containerEl: HTMLElement): void {
         const settings = this._plugin.settings.autoScrollSettings;
 
+        containerEl.createEl("p", {
+            text: "Auto scroll will continuously scroll at the specified speed until it reaches the top/bottom of the document or is stopped by another command.",
+            cls: "setting-item-description",
+        });
+
         new Setting(containerEl)
             .setName("Auto Scroll Speed")
             .setDesc("Speed of auto scrolling in pixels per second.")
             .addSlider((slider) => {
-                slider.setLimits(10, 500, 10);
+                slider.setLimits(10, 500, 5);
                 slider.setValue(settings.scrollSpeed);
                 slider.setDynamicTooltip();
                 slider.onChange(async (value) => {
@@ -280,11 +285,6 @@ class AutoScrollSettings extends SettingsTabPage {
                     await this._plugin.saveSettings();
                 });
             });
-
-        containerEl.createEl("p", {
-            text: "Auto scroll will continuously scroll at the specified speed until it reaches the top/bottom of the document or is stopped by another command.",
-            cls: "setting-item-description",
-        });
     }
 }
 
