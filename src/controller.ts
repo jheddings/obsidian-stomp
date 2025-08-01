@@ -8,7 +8,10 @@ import {
     ScrollStopper,
     SectionScrollerNext,
     SectionScrollerPrev,
+    AutoScrollerUp,
+    AutoScrollerDown,
     ViewScroller,
+    ScrollToggler,
 } from "./scroller";
 
 /**
@@ -24,6 +27,11 @@ export interface ScrollCommand {
  * List of available scroll commands.
  */
 export const SCROLL_COMMANDS: ScrollCommand[] = [
+    {
+        id: "stomp-stop-scroll",
+        name: "Stop scrolling",
+        description: "Stop any active scroll animation",
+    },
     {
         id: "stomp-page-scroll-up",
         name: "Scroll page up",
@@ -55,9 +63,24 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         description: "Fast scroll down with full viewport height",
     },
     {
-        id: "stomp-stop-scroll",
-        name: "Stop scrolling",
-        description: "Stop any active scroll animation",
+        id: "stomp-auto-scroll-up",
+        name: "Auto scroll up",
+        description: "Continuously scroll up at a set speed",
+    },
+    {
+        id: "stomp-auto-scroll-down",
+        name: "Auto scroll down",
+        description: "Continuously scroll down at a set speed",
+    },
+    {
+        id: "stomp-toggle-auto-scroll-up",
+        name: "Toggle auto scroll up",
+        description: "Toggles auto scrolling up",
+    },
+    {
+        id: "stomp-toggle-auto-scroll-down",
+        name: "Toggle auto scroll down",
+        description: "Toggles auto scrolling down",
     },
 ];
 
@@ -102,6 +125,20 @@ export class ScrollController {
         this.scrollStrategies.set(
             "stomp-section-scroll-prev",
             new SectionScrollerPrev(this.engine, settings.sectionScrollSettings)
+        );
+
+        const autoScrollUp = new AutoScrollerUp(this.engine, settings.autoScrollSettings);
+        this.scrollStrategies.set("stomp-auto-scroll-up", autoScrollUp);
+        this.scrollStrategies.set(
+            "stomp-toggle-auto-scroll-up",
+            new ScrollToggler(this.engine, autoScrollUp)
+        );
+
+        const autoScrollDown = new AutoScrollerDown(this.engine, settings.autoScrollSettings);
+        this.scrollStrategies.set("stomp-auto-scroll-down", autoScrollDown);
+        this.scrollStrategies.set(
+            "stomp-toggle-auto-scroll-down",
+            new ScrollToggler(this.engine, autoScrollDown)
         );
     }
 

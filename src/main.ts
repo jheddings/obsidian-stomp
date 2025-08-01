@@ -25,6 +25,10 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
         stopAtHR: true,
         stopAtCustom: [],
     },
+
+    autoScrollSettings: {
+        scrollSpeed: 100, // pixels per second
+    },
 };
 
 export default class StompPlugin extends Plugin {

@@ -2,6 +2,11 @@
 
 import { Logger } from "./logger";
 
+export enum ScrollDirection {
+    UP = -1,
+    DOWN = 1,
+}
+
 /**
  * Handles scroll animation and state for scroll actions.
  */
@@ -12,6 +17,10 @@ export class ScrollEngine {
     private logger: Logger = Logger.getLogger("ScrollEngine");
     private animationId: NodeJS.Timeout | null = null;
     private activeElement: HTMLElement | null = null;
+
+    get isActive(): boolean {
+        return this.activeElement !== null && this.animationId !== null;
+    }
 
     /**
      * Activates the given element for scrolling.
@@ -55,71 +64,6 @@ export class ScrollEngine {
     }
 
     /**
-     * Animates scrolling to the target position over a duration.
-     */
-    async animatedScroll(targetTop: number, durationMs: number): Promise<void> {
-        this.stopAnimation();
-
-        if (!this.activeElement) {
-            throw new Error("No active element");
-        }
-
-        const frameInterval = 1000 / ScrollEngine.ANIMATION_FRAME_RATE;
-        const startTop = this.activeElement.scrollTop;
-        const clampedTop = Math.max(targetTop, 0);
-        const distance = Math.abs(clampedTop - startTop);
-
-        if (durationMs <= frameInterval || distance <= ScrollEngine.ANIMATION_FRAME_THRESHOLD) {
-            this.directScroll(clampedTop);
-            return;
-        }
-
-        const totalFrames = Math.ceil(durationMs / frameInterval);
-        const pixelsPerFrame = (clampedTop - startTop) / totalFrames;
-
-        this.logger.debug(`Frame info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
-
-        return new Promise((resolve) => {
-            let currentPosition = this.activeElement.scrollTop;
-            const startTime = performance.now();
-
-            const finalize = (logMessage: string) => {
-                const elapsedTime = performance.now() - startTime;
-                this.logger.debug(`${logMessage} (${elapsedTime.toFixed(2)}ms)`);
-                this.animationId = null;
-                resolve();
-            };
-
-            const animate = () => {
-                const nextPosition = currentPosition + pixelsPerFrame;
-                const remainingDistance = Math.abs(clampedTop - nextPosition);
-
-                this.logger.debug(
-                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
-                );
-
-                if (remainingDistance <= ScrollEngine.ANIMATION_FRAME_THRESHOLD) {
-                    this.directScroll(clampedTop);
-                    finalize(`Scroll stopped @ ${clampedTop}`);
-                    return;
-                }
-
-                currentPosition = nextPosition;
-                this.directScroll(currentPosition);
-
-                if (this.activeElement.scrollTop === clampedTop) {
-                    finalize("Animation completed");
-                    return;
-                }
-
-                this.animationId = setTimeout(animate, frameInterval);
-            };
-
-            this.animationId = setTimeout(animate, frameInterval);
-        });
-    }
-
-    /**
      * Instantly scrolls to the target position.
      */
     directScroll(targetTop: number) {
@@ -143,5 +87,106 @@ export class ScrollEngine {
         } else {
             this.logger.debug(`Scroll successful: ${currentTop} -> ${newTop}`);
         }
+    }
+
+    async animatedScroll(
+        frameInterval: number,
+        pixelsPerFrame: number,
+        totalFrames: number
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            let currentPosition = this.activeElement.scrollTop;
+            let framesProcessed = 0;
+
+            const startTime = performance.now();
+
+            const finalize = (logMessage: string) => {
+                const elapsedTime = performance.now() - startTime;
+                this.logger.debug(
+                    `${logMessage} (${framesProcessed} frames, ${elapsedTime.toFixed(2)}ms)`
+                );
+                this.animationId = null;
+                resolve();
+            };
+
+            const animate = () => {
+                const previousPosition = this.activeElement.scrollTop;
+                const nextPosition = currentPosition + pixelsPerFrame;
+
+                this.logger.debug(
+                    `Frame [${this.animationId}] ${currentPosition} to ${nextPosition}`
+                );
+
+                currentPosition = nextPosition;
+                this.directScroll(currentPosition);
+
+                // check if we've reached a document limit
+                const actualPosition = this.activeElement.scrollTop;
+                if (actualPosition === previousPosition) {
+                    finalize(`Scroll stopped @ ${actualPosition}`);
+                    return;
+                }
+
+                framesProcessed++;
+
+                // check if we've completed all frames
+                if (totalFrames >= 0 && framesProcessed >= totalFrames) {
+                    finalize("Animation completed");
+                    return;
+                }
+
+                this.animationId = setTimeout(animate, frameInterval);
+            };
+
+            this.animationId = setTimeout(animate, frameInterval);
+        });
+    }
+
+    /**
+     * Animates scrolling to the target position over a given duration.
+     */
+    async smoothTargetScroll(targetTop: number, durationMs: number): Promise<void> {
+        this.stopAnimation();
+
+        if (!this.activeElement) {
+            throw new Error("No active element");
+        }
+
+        const frameInterval = 1000 / ScrollEngine.ANIMATION_FRAME_RATE;
+        const startTop = this.activeElement.scrollTop;
+        const clampedTop = Math.max(targetTop, 0);
+        const distance = Math.abs(clampedTop - startTop);
+
+        if (durationMs <= frameInterval || distance <= ScrollEngine.ANIMATION_FRAME_THRESHOLD) {
+            this.directScroll(clampedTop);
+            return;
+        }
+
+        const totalFrames = Math.ceil(durationMs / frameInterval);
+        const pixelsPerFrame = (clampedTop - startTop) / totalFrames;
+
+        this.logger.debug(`Frame info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
+
+        await this.animatedScroll(frameInterval, pixelsPerFrame, totalFrames);
+    }
+
+    /**
+     * Starts continuous scrolling at a given speed in pixels per second.
+     */
+    async continuousScroll(direction: ScrollDirection, pixelsPerSecond: number): Promise<void> {
+        this.stopAnimation();
+
+        if (!this.activeElement) {
+            throw new Error("No active element");
+        }
+
+        const frameInterval = 1000 / ScrollEngine.ANIMATION_FRAME_RATE;
+        const pixelsPerFrame = ((pixelsPerSecond * frameInterval) / 1000) * direction;
+
+        this.logger.debug(
+            `Starting continuous scroll: ${pixelsPerSecond}px/s, ${pixelsPerFrame}px/frame`
+        );
+
+        await this.animatedScroll(frameInterval, pixelsPerFrame, 0);
     }
 }

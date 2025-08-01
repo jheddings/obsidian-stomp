@@ -252,6 +252,43 @@ class SectionScrollSettings extends SettingsTabPage {
 }
 
 /**
+ * Settings page for auto scroll behavior.
+ */
+class AutoScrollSettings extends SettingsTabPage {
+    /**
+     * Creates a new AutoScrollSettings instance.
+     */
+    constructor(plugin: StompPlugin) {
+        super(plugin, "Auto Scrolling");
+    }
+
+    /**
+     * Displays the auto scroll settings UI.
+     */
+    display(containerEl: HTMLElement): void {
+        const settings = this._plugin.settings.autoScrollSettings;
+
+        containerEl.createEl("p", {
+            text: "Auto scroll will continuously scroll at the specified speed until it reaches the top/bottom of the document or is stopped by another command.",
+            cls: "setting-item-description",
+        });
+
+        new Setting(containerEl)
+            .setName("Auto Scroll Speed")
+            .setDesc("Speed of auto scrolling in pixels per second.")
+            .addSlider((slider) => {
+                slider.setLimits(10, 500, 5);
+                slider.setValue(settings.scrollSpeed);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    settings.scrollSpeed = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+    }
+}
+
+/**
  * Settings page for advanced options.
  */
 class AdvancedSettings extends SettingsTabPage {
@@ -330,6 +367,7 @@ export class StompSettingsTab extends PluginSettingTab {
             new KeyBindingSettings(plugin),
             new PageScrollSettings(plugin),
             new SectionScrollSettings(plugin),
+            new AutoScrollSettings(plugin),
             new AdvancedSettings(plugin),
         ];
     }

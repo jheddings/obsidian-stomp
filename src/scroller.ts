@@ -1,5 +1,7 @@
-import { PageScrollSettings, SectionScrollSettings } from "./config";
-import { ScrollEngine } from "./engine";
+// scroller.ts - defines scroll strategies for the plugin
+
+import { PageScrollSettings, SectionScrollSettings, AutoScrollSettings } from "./config";
+import { ScrollDirection, ScrollEngine } from "./engine";
 import { Logger } from "./logger";
 
 /**
@@ -28,6 +30,7 @@ export class ScrollStopper extends ViewScroller {
      */
     constructor(engine: ScrollEngine) {
         super(engine);
+
         this.logger = Logger.getLogger("ScrollStopper");
     }
 
@@ -35,7 +38,38 @@ export class ScrollStopper extends ViewScroller {
      * Executes the stop scroll action.
      */
     async execute(_element: HTMLElement): Promise<void> {
+        this.logger.debug("Stopping scroll animation");
         this.engine.stopAnimation();
+    }
+}
+
+/**
+ * Wraps an existing scroller to toggle scrolling on and off.
+ */
+export class ScrollToggler extends ViewScroller {
+    /**
+     * Creates a new ScrollToggler instance.
+     */
+    constructor(
+        engine: ScrollEngine,
+        private scroller: ViewScroller
+    ) {
+        super(engine);
+
+        this.logger = Logger.getLogger("ScrollToggler");
+    }
+
+    /**
+     * Toggles the scrolling behavior of the wrapped scroller.
+     */
+    async execute(element: HTMLElement): Promise<void> {
+        if (this.engine.isActive) {
+            this.logger.debug("Stopping current scroll");
+            await this.engine.stopAnimation();
+        } else {
+            this.logger.debug("Executing scroll action");
+            await this.scroller.execute(element);
+        }
     }
 }
 
@@ -90,7 +124,9 @@ export class PageScrollerUp extends PageScroller {
     async execute(element: HTMLElement): Promise<void> {
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop - scrollAmount;
-        await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
+
+        this.logger.debug(`Scrolling to ${targetTop}px`);
+        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
     }
 }
 
@@ -112,7 +148,9 @@ export class PageScrollerDown extends PageScroller {
     async execute(element: HTMLElement): Promise<void> {
         const scrollAmount = this.getScrollSizePx(element);
         const targetTop = element.scrollTop + scrollAmount;
-        await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
+
+        this.logger.debug(`Scrolling to ${targetTop}px`);
+        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
     }
 }
 
@@ -149,10 +187,11 @@ abstract class SectionScroller extends ViewScroller {
      * Scrolls to the specified element in the container.
      */
     protected async scrollToElement(container: HTMLElement, target: HTMLElement): Promise<void> {
-        this.logger.debug(`Section scroll target: ${target.tagName}.${target.className}`);
-
         const targetTop = this.getElementScrollPosition(container, target);
-        await this.engine.animatedScroll(targetTop, this.scrollDurationMs);
+        this.logger.debug(
+            `Section scroll target: ${target.tagName}.${target.className} @ ${targetTop}px`
+        );
+        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
     }
 
     /**
@@ -254,8 +293,6 @@ export class SectionScrollerNext extends SectionScroller {
             }
         }
 
-        this.logger.debug("Next section not found");
-
         return null;
     }
 
@@ -266,7 +303,10 @@ export class SectionScrollerNext extends SectionScroller {
         const targetElement = this.findNextSection(element);
 
         if (targetElement) {
+            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
             await this.scrollToElement(element, targetElement);
+        } else {
+            this.logger.debug("Section not found");
         }
     }
 }
@@ -301,8 +341,6 @@ export class SectionScrollerPrev extends SectionScroller {
             }
         }
 
-        this.logger.debug("Previous section not found");
-
         return null;
     }
 
@@ -313,7 +351,79 @@ export class SectionScrollerPrev extends SectionScroller {
         const targetElement = this.findPreviousSection(element);
 
         if (targetElement) {
+            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
             await this.scrollToElement(element, targetElement);
+        } else {
+            this.logger.debug("Previous section not found");
         }
+    }
+}
+
+/**
+ * Base class for auto scroll strategies.
+ */
+abstract class AutoScroller extends ViewScroller {
+    protected options: AutoScrollSettings;
+
+    /**
+     * Creates a new AutoScroller instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine);
+
+        this.options = options;
+        this.logger = Logger.getLogger("AutoScroller");
+    }
+
+    /**
+     * Gets the scroll speed in pixels per second.
+     * @returns The scroll speed in pixels per second.
+     */
+    get scrollSpeed(): number {
+        return this.options.scrollSpeed;
+    }
+}
+
+/**
+ * Continuously scrolls up at a set speed until reaching the top or stopped.
+ */
+export class AutoScrollerUp extends AutoScroller {
+    /**
+     * Creates a new AutoScrollerUp instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine, options);
+
+        this.logger = Logger.getLogger("AutoScrollerUp");
+    }
+
+    /**
+     * Executes the continuous scroll up action.
+     */
+    async execute(_element: HTMLElement): Promise<void> {
+        this.logger.debug("Starting auto scroll");
+        await this.engine.continuousScroll(ScrollDirection.UP, this.scrollSpeed);
+    }
+}
+
+/**
+ * Continuously scrolls down at a set speed until reaching the bottom or stopped.
+ */
+export class AutoScrollerDown extends AutoScroller {
+    /**
+     * Creates a new AutoScrollerDown instance.
+     */
+    constructor(engine: ScrollEngine, options: AutoScrollSettings) {
+        super(engine, options);
+
+        this.logger = Logger.getLogger("AutoScrollerDown");
+    }
+
+    /**
+     * Executes the continuous scroll down action.
+     */
+    async execute(_element: HTMLElement): Promise<void> {
+        this.logger.debug("Starting auto scroll");
+        await this.engine.continuousScroll(ScrollDirection.DOWN, this.scrollSpeed);
     }
 }
