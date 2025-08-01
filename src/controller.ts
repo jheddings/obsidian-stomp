@@ -27,6 +27,11 @@ export interface ScrollCommand {
  */
 export const SCROLL_COMMANDS: ScrollCommand[] = [
     {
+        id: "stomp-stop-scroll",
+        name: "Stop scrolling",
+        description: "Stop any active scroll animation",
+    },
+    {
         id: "stomp-page-scroll-up",
         name: "Scroll page up",
         description: "Scroll up by a percentage of the viewport height",
@@ -55,11 +60,6 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         id: "stomp-quick-scroll-down",
         name: "Quick scroll down",
         description: "Fast scroll down with full viewport height",
-    },
-    {
-        id: "stomp-stop-scroll",
-        name: "Stop scrolling",
-        description: "Stop any active scroll animation",
     },
     {
         id: "stomp-auto-scroll-up",
