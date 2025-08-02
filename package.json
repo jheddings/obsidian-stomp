@@ -13,7 +13,7 @@
         "lint": "eslint --fix .",
         "test": "npm run build",
         "preflight": "npm run build && npm test && npm run format && npm run lint",
-        "release": "npm run preflight && git push origin v$npm_package_version",
+        "release": "npm run preflight && git tag v$npm_package_version && git push && git push --tags",
         "version": "node version.mjs && git add manifest.json versions.json",
         "postversion": "git commit --amend -m \"obsidian-stomp-$npm_package_version\""
     },
