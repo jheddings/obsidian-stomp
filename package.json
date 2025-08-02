@@ -5,9 +5,6 @@
     "author": "Jason Heddings",
     "license": "MIT",
     "main": "main.js",
-    "config": {
-        "tag-version-prefix": ""
-    },
     "scripts": {
         "prepare": "husky",
         "dev": "node esbuild.config.mjs",
