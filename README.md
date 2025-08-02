@@ -48,7 +48,7 @@ Page scrolling moves the viewable area by a user-defined percentage at a specifi
 Section scrolling allows jumping to specific section elements rather than fixed page amounts. You can configure which elements to stop at:
 
 - Heading level 1 (`<h1>`) elements
-- Heading level 2 (`<h2>`) elements  
+- Heading level 2 (`<h2>`) elements
 - Horizontal rules (`<hr>`) elements
 - Custom CSS selectors for additional elements
 
