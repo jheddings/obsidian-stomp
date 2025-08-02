@@ -40,7 +40,7 @@ Section scrolling allows the user to stop at specific section elements, rather t
 
 ## Installation
 
-Installation is supporting using BRAT.
+Installation is supporting using [BRAT](https://tfthacker.com/BRAT).
 
 ## Known Issues
 
