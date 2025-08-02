@@ -6,7 +6,7 @@
     "license": "MIT",
     "main": "main.js",
     "scripts": {
-        "prepare": "husky install",
+        "prepare": "husky",
         "dev": "node esbuild.config.mjs",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "format": "prettier --write .",
