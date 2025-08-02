@@ -3,7 +3,7 @@
     "name": "STOMP",
     "version": "0.5.1",
     "minAppVersion": "0.15.0",
-    "description": "Controls for Reading View using foot pedals",
+    "description": "Integrated support for foot-pedals in Reading View.",
     "author": "Jason Heddings",
     "authorUrl": "https://github.com/jheddings",
     "isDesktopOnly": false
