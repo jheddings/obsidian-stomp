@@ -126,7 +126,7 @@ export class PageScrollerUp extends PageScroller {
         const targetTop = element.scrollTop - scrollAmount;
 
         this.logger.debug(`Scrolling to ${targetTop}px`);
-        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
+        await this.engine.smoothScrollTo(targetTop, this.scrollDurationMs);
     }
 }
 
@@ -150,7 +150,7 @@ export class PageScrollerDown extends PageScroller {
         const targetTop = element.scrollTop + scrollAmount;
 
         this.logger.debug(`Scrolling to ${targetTop}px`);
-        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
+        await this.engine.smoothScrollTo(targetTop, this.scrollDurationMs);
     }
 }
 
@@ -191,7 +191,7 @@ abstract class SectionScroller extends ViewScroller {
         this.logger.debug(
             `Section scroll target: ${target.tagName}.${target.className} @ ${targetTop}px`
         );
-        await this.engine.smoothTargetScroll(targetTop, this.scrollDurationMs);
+        await this.engine.smoothScrollTo(targetTop, this.scrollDurationMs);
     }
 
     /**

@@ -37,6 +37,14 @@ export interface AutoScrollSettings {
 }
 
 /**
+ * Settings for easing animation behavior.
+ */
+export interface EngineSettings {
+    easeInFactor: number;
+    easeOutFactor: number;
+}
+
+/**
  * Main plugin settings structure.
  */
 export interface StompPluginSettings {
@@ -45,6 +53,7 @@ export interface StompPluginSettings {
     quickScrollSettings: PageScrollSettings;
     sectionScrollSettings: SectionScrollSettings;
     autoScrollSettings: AutoScrollSettings;
+    engineSettings: EngineSettings;
     logLevel: LogLevel;
 }
 
