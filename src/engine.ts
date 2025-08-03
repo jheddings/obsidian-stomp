@@ -145,7 +145,7 @@ export class ScrollEngine {
     /**
      * Animates scrolling to the target position over a given duration.
      */
-    async smoothTargetScroll(targetTop: number, durationMs: number): Promise<void> {
+    async smoothScrollTo(targetTop: number, durationMs: number): Promise<void> {
         this.stopAnimation();
 
         if (!this.activeElement) {
