@@ -190,7 +190,7 @@ export class ScrollEngine {
                 framesProcessed++;
 
                 // check if we've completed all frames
-                if (totalFrames >= 0 && framesProcessed >= totalFrames) {
+                if (totalFrames > 0 && framesProcessed >= totalFrames) {
                     finalize("Animation completed");
                     return;
                 }
