@@ -2,7 +2,7 @@
     "id": "stomp",
     "name": "STOMP",
     "version": "0.5.2",
-    "minAppVersion": "0.15.0",
+    "minAppVersion": "1.0.0",
     "description": "Integrated support for foot-pedals in Reading View.",
     "author": "Jason Heddings",
     "authorUrl": "https://github.com/jheddings",
