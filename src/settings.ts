@@ -330,7 +330,22 @@ class AdvancedSettings extends SettingsTabPage {
 
         const keyDisplay = testArea.createEl("div", {
             cls: "stomp-key-display",
-            text: "No keys pressed yet...",
+        });
+
+        const keyEl = keyDisplay.createEl("span", {
+            text: "Key: <waiting for key press>",
+        });
+
+        keyDisplay.createEl("br");
+
+        const codeEl = keyDisplay.createEl("span", {
+            text: "Code: <waiting for key press>",
+        });
+
+        keyDisplay.createEl("br");
+
+        const timestampEl = keyDisplay.createEl("span", {
+            text: "Timestamp: <waiting for key press>",
         });
 
         const testInput = testArea.createEl("input", {
@@ -341,12 +356,11 @@ class AdvancedSettings extends SettingsTabPage {
 
         testInput.addEventListener("keydown", (e) => {
             e.preventDefault();
-            keyDisplay.innerHTML = `
-                <strong>Key detected:</strong><br>
-                Key: "${e.key}"<br>
-                Code: "${e.code}"<br>
-                Timestamp: ${new Date().toLocaleTimeString()}
-            `;
+
+            // Update the content of existing elements
+            keyEl.textContent = `Key: "${e.key}"`;
+            codeEl.textContent = `Code: "${e.code}"`;
+            timestampEl.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
         });
     }
 }
