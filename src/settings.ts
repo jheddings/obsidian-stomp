@@ -116,7 +116,7 @@ class PageScrollSettings extends SettingsTabPage {
         const quickSettings = this._plugin.settings.quickScrollSettings;
 
         new Setting(containerEl)
-            .setName("Page Scroll Duration")
+            .setName("Page scroll duration")
             .setDesc("Duration of page scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 2.0, 0.05);
@@ -129,7 +129,7 @@ class PageScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Page Scroll Amount")
+            .setName("Page scroll amount")
             .setDesc("Percentage of view to scroll when commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(5, 100, 1);
@@ -142,7 +142,7 @@ class PageScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Quick Scroll Duration")
+            .setName("Quick scroll duration")
             .setDesc("Duration of quick scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 0.5, 0.05);
@@ -155,7 +155,7 @@ class PageScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Quick Scroll Amount")
+            .setName("Quick scroll amount")
             .setDesc("Percentage of view to scroll when quick commands are executed.")
             .addSlider((slider) => {
                 slider.setLimits(5, 100, 1);
@@ -187,7 +187,7 @@ class SectionScrollSettings extends SettingsTabPage {
         const settings = this._plugin.settings.sectionScrollSettings;
 
         new Setting(containerEl)
-            .setName("Section Scroll Duration")
+            .setName("Section scroll duration")
             .setDesc("Duration of section scroll animation in seconds.")
             .addSlider((slider) => {
                 slider.setLimits(0, 2.0, 0.05);
@@ -200,7 +200,7 @@ class SectionScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Stop at Heading level 1 sections")
+            .setName("Stop at heading level 1 sections")
             .setDesc("Include `<h1>` elements when scrolling to sections.")
             .addToggle((toggle) => {
                 toggle.setValue(settings.stopAtH1);
@@ -211,7 +211,7 @@ class SectionScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Stop at Heading level 2 sections")
+            .setName("Stop at heading level 2 sections")
             .setDesc("Include `<h2>` elements when scrolling to sections.")
             .addToggle((toggle) => {
                 toggle.setValue(settings.stopAtH2);
@@ -222,7 +222,7 @@ class SectionScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Stop at Horizontal Rules")
+            .setName("Stop at horizontal rules")
             .setDesc("Include `<hr>` elements when scrolling to sections.")
             .addToggle((toggle) => {
                 toggle.setValue(settings.stopAtHR);
@@ -233,7 +233,7 @@ class SectionScrollSettings extends SettingsTabPage {
             });
 
         new Setting(containerEl)
-            .setName("Custom Elements")
+            .setName("Custom elements")
             .setDesc("CSS selectors for additional custom elements (one per line).")
             .addTextArea((textArea) => {
                 textArea.setValue(settings.stopAtCustom.join("\n"));
@@ -274,7 +274,7 @@ class AutoScrollSettings extends SettingsTabPage {
         });
 
         new Setting(containerEl)
-            .setName("Auto Scroll Speed")
+            .setName("Auto scroll speed")
             .setDesc("Speed of auto scrolling in pixels per second.")
             .addSlider((slider) => {
                 slider.setLimits(10, 500, 5);
@@ -304,7 +304,7 @@ class AdvancedSettings extends SettingsTabPage {
      */
     display(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName("Log Level")
+            .setName("Log level")
             .setDesc("Set the logging level for debug output")
             .addDropdown((dropdown) => {
                 dropdown.addOption(LogLevel.ERROR.toString(), "Error");
@@ -318,7 +318,7 @@ class AdvancedSettings extends SettingsTabPage {
                 });
             });
 
-        new Setting(containerEl).setName("Key Capture Test").setHeading();
+        new Setting(containerEl).setName("Key capture test").setHeading();
 
         const testArea = containerEl.createEl("div", {
             cls: "stomp-key-test-area",
