@@ -15,7 +15,7 @@ Some uses for this plugin include:
 
 - **Multiple Scroll Modes**: Page scrolling, section scrolling, quick scrolling, and auto scrolling
 - **Configurable Key Bindings**: Map system keys to scroll commands for foot pedal compatibility
-- **Smooth Scrolling**: Animated scrolling with configurable duration and easing
+- **Smooth Scrolling**: Animated scrolling with configurable duration
 - **Section Navigation**: Jump between headings (H1, H2) and horizontal rules with custom selectors
 - **Auto Scrolling**: Continuous scrolling at configurable speeds with toggle controls
 - **Command Palette**: All scroll commands available via Obsidian's command palette
