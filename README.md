@@ -63,8 +63,45 @@ Auto scrolling provides continuous movement at a configurable speed until reachi
 
 ## Installation
 
-Installation is supporting using [BRAT](https://tfthacker.com/BRAT).
+### From Community Plugins
+
+1. Open Obsidian Settings
+2. Go to Community Plugins and disable Safe Mode
+3. Click Browse and search for "STOMP"
+4. Install the plugin and enable it
+
+### Manual Installation
+
+1. Download the latest release from the [GitHub releases page](https://github.com/jheddings/obsidian-stomp/releases)
+2. Extract the files to your vault's `.obsidian/plugins/stomp/` directory
+3. Reload Obsidian and enable the plugin in Community Plugins settings
+
+### Development Installation
+
+Installation is supported using [BRAT](https://tfthacker.com/BRAT) for testing development versions.
+
+## Support
+
+If you encounter issues or have feature requests, please:
+
+1. Check the [GitHub Issues](https://github.com/jheddings/obsidian-stomp/issues) page
+2. Create a new issue with detailed information about the problem
+3. Include your Obsidian version and operating system
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with appropriate tests
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Known Issues
 
 - On some mobile devices, the Page Up / Down keys are not properly captured and may not trigger the plugin.
+- Key bindings may conflict with system shortcuts on some operating systems.
