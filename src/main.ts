@@ -29,6 +29,11 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
     autoScrollSettings: {
         scrollSpeed: 100, // pixels per second
     },
+
+    engineSettings: {
+        easeInFactor: 1,
+        easeOutFactor: 1,
+    },
 };
 
 export default class StompPlugin extends Plugin {
@@ -78,6 +83,11 @@ export default class StompPlugin extends Plugin {
         Logger.setGlobalLogLevel(this.settings.logLevel);
 
         this.controller = new ScrollController(this.app, this.settings);
+
+        // Update easing settings if controller already exists
+        if (this.controller) {
+            this.controller.updateEasingSettings(this.settings);
+        }
     }
 
     private handleKeyDown = (evt: KeyboardEvent) => {

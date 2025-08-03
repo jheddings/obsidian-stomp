@@ -100,6 +100,9 @@ export class ScrollController {
         private app: App,
         settings: StompPluginSettings
     ) {
+        // Update engine with easing settings
+        this.engine.updateSettings(settings.engineSettings);
+
         this.scrollStrategies.set("stomp-stop-scroll", new ScrollStopper(this.engine));
 
         this.scrollStrategies.set(
@@ -140,6 +143,13 @@ export class ScrollController {
             "stomp-toggle-auto-scroll-down",
             new ScrollToggler(this.engine, autoScrollDown)
         );
+    }
+
+    /**
+     * Updates the easing settings for the scroll engine.
+     */
+    updateEasingSettings(settings: StompPluginSettings): void {
+        this.engine.updateSettings(settings.engineSettings);
     }
 
     /**

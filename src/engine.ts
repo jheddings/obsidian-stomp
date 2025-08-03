@@ -1,10 +1,59 @@
 // engine.ts - handles scroll animation and state for scroll actions
 
 import { Logger } from "./logger";
+import { EngineSettings } from "./config";
 
 export enum ScrollDirection {
     UP = -1,
     DOWN = 1,
+}
+
+/**
+ * Easing function type definition.
+ */
+type EasingFunction = (t: number) => number;
+
+/**
+ * Collection of easing functions for smooth animations.
+ */
+class EasingFunctions {
+    /**
+     * Linear easing (no acceleration/deceleration).
+     */
+    static linear(t: number): number {
+        return t;
+    }
+
+    /**
+     * Ease-in function using quadratic interpolation.
+     */
+    static easeIn(t: number, factor: number): number {
+        if (factor <= 0) return t;
+        return Math.pow(t, 1 + factor * 2);
+    }
+
+    /**
+     * Ease-out function using quadratic interpolation.
+     */
+    static easeOut(t: number, factor: number): number {
+        if (factor <= 0) return t;
+        return 1 - Math.pow(1 - t, 1 + factor * 2);
+    }
+
+    /**
+     * Combined ease-in-out function.
+     */
+    static easeInOut(t: number, easeInFactor: number, easeOutFactor: number): number {
+        if (easeInFactor <= 0 && easeOutFactor <= 0) {
+            return t;
+        }
+
+        if (t < 0.5) {
+            return 0.5 * EasingFunctions.easeIn(t * 2, easeInFactor);
+        } else {
+            return 0.5 + 0.5 * EasingFunctions.easeOut((t - 0.5) * 2, easeOutFactor);
+        }
+    }
 }
 
 /**
@@ -17,9 +66,17 @@ export class ScrollEngine {
     private logger: Logger = Logger.getLogger("ScrollEngine");
     private animationId: NodeJS.Timeout | null = null;
     private activeElement: HTMLElement | null = null;
+    private settings: EngineSettings;
 
     get isActive(): boolean {
         return this.activeElement !== null && this.animationId !== null;
+    }
+
+    /**
+     * Updates the easing settings for animations.
+     */
+    updateSettings(settings: EngineSettings): void {
+        this.settings = { ...settings };
     }
 
     /**
@@ -89,6 +146,9 @@ export class ScrollEngine {
         }
     }
 
+    /**
+     * Performs animated scrolling with linear progression (for continuous scrolling).
+     */
     async animatedScroll(
         frameInterval: number,
         pixelsPerFrame: number,
@@ -143,7 +203,74 @@ export class ScrollEngine {
     }
 
     /**
-     * Animates scrolling to the target position over a given duration.
+     * Performs eased animated scrolling from start to target position.
+     */
+    async easedAnimatedScroll(
+        startPosition: number,
+        targetPosition: number,
+        frameInterval: number,
+        totalFrames: number,
+        easingFunction: EasingFunction
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            let framesProcessed = 0;
+            const distance = targetPosition - startPosition;
+
+            const startTime = performance.now();
+
+            const finalize = (logMessage: string) => {
+                const elapsedTime = performance.now() - startTime;
+                this.logger.debug(
+                    `${logMessage} (${framesProcessed} frames, ${elapsedTime.toFixed(2)}ms)`
+                );
+                this.animationId = null;
+                resolve();
+            };
+
+            const animate = () => {
+                const previousPosition = this.activeElement.scrollTop;
+
+                // Calculate progress as a value between 0 and 1
+                const progress = Math.min(framesProcessed / totalFrames, 1);
+
+                // Apply easing function to progress
+                const easedProgress = easingFunction(progress);
+
+                // Calculate the current position using eased progress
+                const currentPosition = startPosition + distance * easedProgress;
+
+                this.logger.debug(
+                    `Frame [${this.animationId}] progress=${progress.toFixed(3)}, eased=${easedProgress.toFixed(3)}, pos=${currentPosition.toFixed(1)}`
+                );
+
+                this.directScroll(currentPosition);
+
+                // check if we've reached a document limit
+                const actualPosition = this.activeElement.scrollTop;
+                if (actualPosition === previousPosition && framesProcessed > 2) {
+                    finalize(`Scroll stopped @ ${actualPosition}`);
+                    return;
+                }
+
+                framesProcessed++;
+
+                // check if we've completed all frames
+                if (framesProcessed >= totalFrames) {
+                    // Ensure we end exactly at the target
+                    this.directScroll(targetPosition);
+                    finalize("Eased animation completed");
+                    return;
+                }
+
+                this.animationId = setTimeout(animate, frameInterval);
+            };
+
+            this.animationId = setTimeout(animate, frameInterval);
+        });
+    }
+
+    /**
+     * Animates scrolling to the target position over a given duration with easing.
      */
     async smoothScrollTo(targetTop: number, durationMs: number): Promise<void> {
         this.stopAnimation();
@@ -163,11 +290,22 @@ export class ScrollEngine {
         }
 
         const totalFrames = Math.ceil(durationMs / frameInterval);
-        const pixelsPerFrame = (clampedTop - startTop) / totalFrames;
 
-        this.logger.debug(`Frame info: ${frameInterval}ms; ${pixelsPerFrame}px per frame`);
+        // Create easing function based on current settings
+        const easingFunction: EasingFunction = (t: number) =>
+            EasingFunctions.easeInOut(t, this.settings.easeInFactor, this.settings.easeOutFactor);
 
-        await this.animatedScroll(frameInterval, pixelsPerFrame, totalFrames);
+        this.logger.debug(
+            `Smooth scroll: ${frameInterval}ms/frame, ${totalFrames} frames, easeIn=${this.settings.easeInFactor}, easeOut=${this.settings.easeOutFactor}`
+        );
+
+        await this.easedAnimatedScroll(
+            startTop,
+            clampedTop,
+            frameInterval,
+            totalFrames,
+            easingFunction
+        );
     }
 
     /**
@@ -187,6 +325,7 @@ export class ScrollEngine {
             `Starting continuous scroll: ${pixelsPerSecond}px/s, ${pixelsPerFrame}px/frame`
         );
 
+        // Continuous scrolling uses linear animation (no easing)
         await this.animatedScroll(frameInterval, pixelsPerFrame, 0);
     }
 }

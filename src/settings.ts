@@ -303,6 +303,47 @@ class AdvancedSettings extends SettingsTabPage {
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
+        const easingSettings = this._plugin.settings.engineSettings;
+
+        new Setting(containerEl).setName("Smooth Scroll Easing").setHeading();
+
+        containerEl.createEl("p", {
+            text: "Configure acceleration and deceleration for smooth scroll animations. Set both to 0 for linear (constant speed) scrolling.",
+            cls: "setting-item-description",
+        });
+
+        new Setting(containerEl)
+            .setName("Ease In Factor")
+            .setDesc(
+                "Controls acceleration at the start of animations. Higher values create more gradual starts."
+            )
+            .addSlider((slider) => {
+                slider.setLimits(0, 2.0, 0.1);
+                slider.setValue(easingSettings.easeInFactor);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    easingSettings.easeInFactor = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Ease Out Factor")
+            .setDesc(
+                "Controls deceleration at the end of animations. Higher values create more gradual stops."
+            )
+            .addSlider((slider) => {
+                slider.setLimits(0, 2.0, 0.1);
+                slider.setValue(easingSettings.easeOutFactor);
+                slider.setDynamicTooltip();
+                slider.onChange(async (value) => {
+                    easingSettings.easeOutFactor = value;
+                    await this._plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl).setName("Debug & Testing").setHeading();
+
         new Setting(containerEl)
             .setName("Log Level")
             .setDesc("Set the logging level for debug output")
