@@ -8,6 +8,7 @@ import {
     SettingsTabPage,
     PluginSettingsTab,
 } from "obskit";
+
 import { getCommandBinding, setCommandBinding } from "./config";
 import { SCROLL_COMMANDS } from "./controller";
 import StompPlugin from "./main";
