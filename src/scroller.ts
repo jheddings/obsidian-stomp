@@ -1,8 +1,8 @@
 // scroller.ts - defines scroll strategies for the plugin
 
+import { Logger } from "obskit";
 import { PageScrollSettings, SectionScrollSettings, AutoScrollSettings } from "./config";
 import { ScrollDirection, ScrollEngine } from "./engine";
-import { Logger } from "./logger";
 
 /**
  * Base class for scroll strategies.
