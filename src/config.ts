@@ -1,4 +1,4 @@
-import { LogLevel } from "./logger";
+import { LogLevel } from "obskit";
 
 /**
  * Represents a key binding for a command.

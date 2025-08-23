@@ -1,7 +1,7 @@
 import { App, Notice, MarkdownView, MarkdownPreviewView } from "obsidian";
 import { StompPluginSettings } from "./config";
 import { ScrollEngine } from "./engine";
-import { Logger } from "./logger";
+import { Logger } from "obskit";
 import {
     PageScrollerDown,
     PageScrollerUp,

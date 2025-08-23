@@ -50,6 +50,6 @@
         ]
     },
     "dependencies": {
-        "obskit": "^1.1.0"
+        "obskit": "^1.4.1"
     }
 }

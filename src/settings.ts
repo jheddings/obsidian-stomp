@@ -1,9 +1,16 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
-import { LogLevel } from "./logger";
+import { App, Setting } from "obsidian";
+import {
+    LogLevel,
+    DropdownSetting,
+    SliderSetting,
+    TextAreaSetting,
+    ToggleSetting,
+    SettingsTabPage,
+    PluginSettingsTab,
+} from "obskit";
 import { getCommandBinding, setCommandBinding } from "./config";
 import { SCROLL_COMMANDS } from "./controller";
 import StompPlugin from "./main";
-import { DropdownSetting, SliderSetting, TextAreaSetting, ToggleSetting } from "obskit";
 
 export const AVAILABLE_KEYS = {
     PageUp: "Page Up",
@@ -386,50 +393,14 @@ class LogLevelConfig extends DropdownSetting<LogLevel> {
 }
 
 /**
- * Base class for settings tab pages.
- */
-abstract class SettingsTabPage {
-    public isActive: boolean = false;
-
-    protected _plugin: StompPlugin;
-    protected _name: string;
-
-    /**
-     * Creates a new SettingsTabPage instance.
-     */
-    constructor(plugin: StompPlugin, name: string) {
-        this._plugin = plugin;
-        this._name = name;
-    }
-
-    /**
-     * Gets the tab page ID.
-     * @returns The tab page ID string.
-     */
-    get id(): string {
-        return this._name.toLowerCase().replace(/\s+/g, "-");
-    }
-
-    /**
-     * Gets the tab page name.
-     * @returns The tab page name string.
-     */
-    get name(): string {
-        return this._name;
-    }
-
-    abstract display(containerEl: HTMLElement): void;
-}
-
-/**
  * Settings page for key bindings.
  */
 class KeyBindingSettings extends SettingsTabPage {
     /**
      * Creates a new KeyBindingSettings instance.
      */
-    constructor(plugin: StompPlugin) {
-        super(plugin, "Key Bindings");
+    constructor(private plugin: StompPlugin) {
+        super("Key Bindings");
     }
 
     /**
@@ -439,7 +410,7 @@ class KeyBindingSettings extends SettingsTabPage {
         new Setting(containerEl).setDesc("Configure key bindings for plugin commands.");
 
         SCROLL_COMMANDS.forEach((command) => {
-            const currentBinding = getCommandBinding(this._plugin.settings, command.id);
+            const currentBinding = getCommandBinding(this.plugin.settings, command.id);
             const currentKey = currentBinding?.key || "";
 
             const setting = new Setting(containerEl)
@@ -456,8 +427,8 @@ class KeyBindingSettings extends SettingsTabPage {
                 dropdown.setValue(currentKey);
                 dropdown.onChange(async (value) => {
                     const newKey = value || null;
-                    setCommandBinding(this._plugin.settings, command.id, newKey);
-                    await this._plugin.saveSettings();
+                    setCommandBinding(this.plugin.settings, command.id, newKey);
+                    await this.plugin.saveSettings();
                 });
             });
         });
@@ -471,18 +442,18 @@ class PageScrollSettings extends SettingsTabPage {
     /**
      * Creates a new PageScrollSettings instance.
      */
-    constructor(plugin: StompPlugin) {
-        super(plugin, "Page Scrolling");
+    constructor(private plugin: StompPlugin) {
+        super("Page Scrolling");
     }
 
     /**
      * Displays the page scroll settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new PageScrollDuration(this._plugin).display(containerEl);
-        new PageScrollAmount(this._plugin).display(containerEl);
-        new QuickScrollDuration(this._plugin).display(containerEl);
-        new QuickScrollAmount(this._plugin).display(containerEl);
+        new PageScrollDuration(this.plugin).display(containerEl);
+        new PageScrollAmount(this.plugin).display(containerEl);
+        new QuickScrollDuration(this.plugin).display(containerEl);
+        new QuickScrollAmount(this.plugin).display(containerEl);
     }
 }
 
@@ -493,19 +464,19 @@ class SectionScrollSettings extends SettingsTabPage {
     /**
      * Creates a new SectionScrollSettings instance.
      */
-    constructor(plugin: StompPlugin) {
-        super(plugin, "Section Scrolling");
+    constructor(private plugin: StompPlugin) {
+        super("Section Scrolling");
     }
 
     /**
      * Displays the section scroll settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new SectionScrollDuration(this._plugin).display(containerEl);
-        new StopAtHeading1(this._plugin).display(containerEl);
-        new StopAtHeading2(this._plugin).display(containerEl);
-        new StopAtHorizontalRule(this._plugin).display(containerEl);
-        new CustomSectionElements(this._plugin).display(containerEl);
+        new SectionScrollDuration(this.plugin).display(containerEl);
+        new StopAtHeading1(this.plugin).display(containerEl);
+        new StopAtHeading2(this.plugin).display(containerEl);
+        new StopAtHorizontalRule(this.plugin).display(containerEl);
+        new CustomSectionElements(this.plugin).display(containerEl);
     }
 }
 
@@ -516,8 +487,8 @@ class AutoScrollSettingsTab extends SettingsTabPage {
     /**
      * Creates a new AutoScrollSettings instance.
      */
-    constructor(plugin: StompPlugin) {
-        super(plugin, "Auto Scrolling");
+    constructor(private plugin: StompPlugin) {
+        super("Auto Scrolling");
     }
 
     /**
@@ -529,7 +500,7 @@ class AutoScrollSettingsTab extends SettingsTabPage {
             cls: "setting-item-description",
         });
 
-        new AutoScrollSpeed(this._plugin).display(containerEl);
+        new AutoScrollSpeed(this.plugin).display(containerEl);
     }
 }
 
@@ -540,15 +511,15 @@ class AdvancedSettingsTab extends SettingsTabPage {
     /**
      * Creates a new AdvancedSettings instance.
      */
-    constructor(plugin: StompPlugin) {
-        super(plugin, "Advanced");
+    constructor(private plugin: StompPlugin) {
+        super("Advanced");
     }
 
     /**
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new LogLevelConfig(this._plugin).display(containerEl);
+        new LogLevelConfig(this.plugin).display(containerEl);
 
         new Setting(containerEl).setName("Key capture test").setHeading();
 
@@ -600,76 +571,19 @@ class AdvancedSettingsTab extends SettingsTabPage {
 /**
  * Main settings tab for the plugin.
  */
-export class StompSettingsTab extends PluginSettingTab {
-    private tabs: SettingsTabPage[];
-
+export class StompSettingsTab extends PluginSettingsTab {
     /**
      * Creates a new StompSettingsTab instance.
      */
     constructor(app: App, plugin: StompPlugin) {
         super(app, plugin);
 
-        this.tabs = [
+        this.addTabs([
             new KeyBindingSettings(plugin),
             new PageScrollSettings(plugin),
             new SectionScrollSettings(plugin),
             new AutoScrollSettingsTab(plugin),
             new AdvancedSettingsTab(plugin),
-        ];
-    }
-
-    /**
-     * Displays the settings tab UI.
-     */
-    display(): void {
-        const { containerEl } = this;
-        containerEl.empty();
-
-        const tabContainer = containerEl.createEl("div", {
-            cls: "stomp-settings-tab-container",
-        });
-
-        const tabContentDiv = containerEl.createEl("div");
-
-        this.tabs.forEach((tab) => {
-            const tabEl = tabContainer.createEl("button", {
-                text: tab.name,
-                cls: "stomp-settings-tab-button",
-            });
-
-            tabEl.addEventListener("click", () => {
-                tabContentDiv.empty();
-
-                this.tabs.forEach((jtab) => {
-                    jtab.isActive = jtab.id === tab.id;
-                });
-
-                this.updateTabButtonStyles(tabContainer);
-
-                tab.display(tabContentDiv);
-            });
-        });
-
-        // show the first tab to start off
-        this.tabs[0].isActive = true;
-        this.tabs[0].display(tabContentDiv);
-
-        this.updateTabButtonStyles(tabContainer);
-    }
-
-    /**
-     * Updates the styles for the tab buttons.
-     */
-    private updateTabButtonStyles(tabContainer: HTMLElement): void {
-        const tabButtons = tabContainer.querySelectorAll(".stomp-settings-tab-button");
-
-        tabButtons.forEach((button, index) => {
-            const tab = this.tabs[index];
-            if (tab && tab.isActive) {
-                button.addClass("stomp-settings-tab-button-active");
-            } else {
-                button.removeClass("stomp-settings-tab-button-active");
-            }
-        });
+        ]);
     }
 }

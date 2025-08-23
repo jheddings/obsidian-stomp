@@ -1,6 +1,6 @@
 import { MarkdownPreviewView, MarkdownView, Plugin } from "obsidian";
 import { StompSettingsTab } from "./settings";
-import { Logger, LogLevel } from "./logger";
+import { Logger, LogLevel } from "obskit";
 import { SCROLL_COMMANDS, ScrollController } from "./controller";
 import { findBindingByKey, StompPluginSettings } from "./config";
 

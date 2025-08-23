@@ -1,6 +1,6 @@
 // engine.ts - handles scroll animation and state for scroll actions
 
-import { Logger } from "./logger";
+import { Logger } from "obskit";
 
 export enum ScrollDirection {
     UP = -1,
