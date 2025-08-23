@@ -361,7 +361,7 @@ class AutoScrollSpeed extends SliderSetting {
 /**
  * Control the log level user setting.
  */
-class LogLevelConfig extends DropdownSetting<LogLevel> {
+class LogLevelSetting extends DropdownSetting<LogLevel> {
     constructor(private plugin: StompPlugin) {
         super({
             name: "Log level",
@@ -383,13 +383,13 @@ class LogLevelConfig extends DropdownSetting<LogLevel> {
     }
 
     get options(): { key: string; label: string; value: LogLevel }[] {
-        return Object.entries(LogLevel)
-            .filter(([_key, value]) => typeof value === "number")
-            .map(([key, value]) => ({
-                key: key,
-                label: key.toLowerCase(),
-                value: value as LogLevel,
-            }));
+        return [
+            { key: "debug", label: "Debug", value: LogLevel.DEBUG },
+            { key: "info", label: "Info", value: LogLevel.INFO },
+            { key: "warn", label: "Warn", value: LogLevel.WARN },
+            { key: "error", label: "Error", value: LogLevel.ERROR },
+            { key: "silent", label: "Silent", value: LogLevel.SILENT },
+        ];
     }
 }
 
@@ -520,7 +520,7 @@ class AdvancedSettingsTab extends SettingsTabPage {
      * Displays the advanced settings UI.
      */
     display(containerEl: HTMLElement): void {
-        new LogLevelConfig(this.plugin).display(containerEl);
+        new LogLevelSetting(this.plugin).display(containerEl);
 
         new Setting(containerEl).setName("Key capture test").setHeading();
 
