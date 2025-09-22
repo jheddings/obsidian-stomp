@@ -57,8 +57,6 @@ export default class StompPlugin extends Plugin {
     }
 
     async onunload() {
-        document.removeEventListener("keydown", this.handleKeyDown, { capture: true });
-
         this.logger.info("Plugin unloaded");
     }
 

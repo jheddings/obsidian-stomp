@@ -1,4 +1,4 @@
-# STOMP - Obsidian Foot Pedal Plugin
+# STOMP - Foot Pedal Integration for Obsidian
 
 A simple Obsidian plugin that enables hands-free reading using foot pedals. STOMP receives system key events to provide smooth, customizable scrolling through your notes. I initially wrote this to integrate with my [Coda STOMP](https://www.codamusictech.com/) (hence the name), but it should work with any pedal.
 
