@@ -43,11 +43,11 @@ export default class StompPlugin extends Plugin {
 
         this.addSettingTab(new StompSettingsTab(this.app, this));
 
-        SCROLL_COMMANDS.forEach((command) => {
+        SCROLL_COMMANDS.forEach((c) => {
             this.addCommand({
-                id: command.id,
-                name: command.name,
-                callback: () => this.controller.executeCommand(command.id),
+                id: c.id,
+                name: c.name,
+                callback: () => this.controller.executeCommand(c.id),
             });
         });
 
