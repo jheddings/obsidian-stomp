@@ -12,8 +12,8 @@ import {
     AutoScrollerDown,
     ViewScroller,
     ScrollToggler,
-    BookendScrollerUp,
-    BookendScrollerDown,
+    EdgeScrollerUp,
+    EdgeScrollerDown,
 } from "./scroller";
 
 /**
@@ -86,12 +86,12 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
     },
     {
         id: "stomp-bookend-scroll-up",
-        name: "Bookend scroll up",
+        name: "Edge scroll up",
         description: "Scroll to the topmost visible section element",
     },
     {
         id: "stomp-bookend-scroll-down",
-        name: "Bookend scroll down",
+        name: "Edge scroll down",
         description: "Scroll to the bottommost visible section element",
     },
 ];
@@ -155,11 +155,11 @@ export class ScrollController {
 
         this.scrollStrategies.set(
             "stomp-bookend-scroll-up",
-            new BookendScrollerUp(this.engine, settings.sectionScrollSettings)
+            new EdgeScrollerUp(this.engine, settings.sectionScrollSettings)
         );
         this.scrollStrategies.set(
             "stomp-bookend-scroll-down",
-            new BookendScrollerDown(this.engine, settings.sectionScrollSettings)
+            new EdgeScrollerDown(this.engine, settings.sectionScrollSettings)
         );
     }
 

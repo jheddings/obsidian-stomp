@@ -444,13 +444,13 @@ export class AutoScrollerDown extends AutoScroller {
 /**
  * Scrolls using the topmost visible section as the target when scrolling up.
  */
-export class BookendScrollerUp extends SectionScroller {
+export class EdgeScrollerUp extends SectionScroller {
     /**
-     * Creates a new BookendScrollerUp instance.
+     * Creates a new EdgeScrollerUp instance.
      */
     constructor(engine: ScrollEngine, options: SectionScrollSettings) {
         super(engine, options);
-        this.logger = Logger.getLogger("BookendScrollerUp");
+        this.logger = Logger.getLogger("EdgeScrollerUp");
     }
 
     /**
@@ -490,13 +490,13 @@ export class BookendScrollerUp extends SectionScroller {
 /**
  * Scrolls using the last visible section as the target when scrolling down.
  */
-export class BookendScrollerDown extends SectionScroller {
+export class EdgeScrollerDown extends SectionScroller {
     /**
-     * Creates a new BookendScrollerDown instance.
+     * Creates a new EdgeScrollerDown instance.
      */
     constructor(engine: ScrollEngine, options: SectionScrollSettings) {
         super(engine, options);
-        this.logger = Logger.getLogger("BookendScrollerDown");
+        this.logger = Logger.getLogger("EdgeScrollerDown");
     }
 
     /**
