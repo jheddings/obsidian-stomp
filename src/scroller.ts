@@ -262,6 +262,19 @@ abstract class SectionScroller extends ViewScroller {
         const relativeTop = elementRect.top - containerRect.top;
         return container.scrollTop + relativeTop;
     }
+
+    /**
+     * Checks if an element is visible in the container's viewport.
+     * @returns True if the element is visible, false otherwise.
+     */
+    protected isElementVisible(element: HTMLElement, container: HTMLElement): boolean {
+        const sectionRect = element.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Check if the section is visible in the viewport
+        // (its top is above the bottom of the viewport and its bottom is below the top)
+        return sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top;
+    }
 }
 
 /**
@@ -446,15 +459,10 @@ export class BookendScrollerUp extends SectionScroller {
      */
     private findTopmostVisibleSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
-        const containerRect = container.getBoundingClientRect();
 
         // Find the first section that is visible in the viewport
         for (const section of sections) {
-            const sectionRect = section.getBoundingClientRect();
-
-            // Check if the section is visible in the viewport
-            // (its top is above the bottom of the viewport and its bottom is below the top)
-            if (sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top) {
+            if (this.isElementVisible(section, container)) {
                 return section;
             }
         }
@@ -469,7 +477,9 @@ export class BookendScrollerUp extends SectionScroller {
         const targetElement = this.findTopmostVisibleSection(element);
 
         if (targetElement) {
-            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
+            this.logger.debug(
+                `Scrolling to: ${targetElement.tagName}.${targetElement.id || targetElement.className}`
+            );
             await this.scrollToElement(element, targetElement);
         } else {
             this.logger.debug("No visible section found");
@@ -495,17 +505,12 @@ export class BookendScrollerDown extends SectionScroller {
      */
     private findLastVisibleSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
-        const containerRect = container.getBoundingClientRect();
 
         // Find the last section that is visible in the viewport
         let lastVisible: HTMLElement | null = null;
 
         for (const section of sections) {
-            const sectionRect = section.getBoundingClientRect();
-
-            // Check if the section is visible in the viewport
-            // (its top is above the bottom of the viewport and its bottom is below the top)
-            if (sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top) {
+            if (this.isElementVisible(section, container)) {
                 lastVisible = section;
             }
         }
@@ -520,7 +525,9 @@ export class BookendScrollerDown extends SectionScroller {
         const targetElement = this.findLastVisibleSection(element);
 
         if (targetElement) {
-            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
+            this.logger.debug(
+                `Scrolling to: ${targetElement.tagName}.${targetElement.id || targetElement.className}`
+            );
             await this.scrollToElement(element, targetElement);
         } else {
             this.logger.debug("No visible section found");
