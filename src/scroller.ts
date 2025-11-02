@@ -427,3 +427,103 @@ export class AutoScrollerDown extends AutoScroller {
         await this.engine.continuousScroll(ScrollDirection.DOWN, this.scrollSpeed);
     }
 }
+
+/**
+ * Scrolls using the topmost visible section as the target when scrolling up.
+ */
+export class BookendScrollerUp extends SectionScroller {
+    /**
+     * Creates a new BookendScrollerUp instance.
+     */
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("BookendScrollerUp");
+    }
+
+    /**
+     * Finds the topmost visible section in the viewport.
+     * @returns The topmost visible section HTMLElement or null.
+     */
+    private findTopmostVisibleSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+        const containerRect = container.getBoundingClientRect();
+
+        // Find the first section that is visible in the viewport
+        for (const section of sections) {
+            const sectionRect = section.getBoundingClientRect();
+
+            // Check if the section is visible in the viewport
+            // (its top is above the bottom of the viewport and its bottom is below the top)
+            if (sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top) {
+                return section;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Executes the bookend scroll up action.
+     */
+    async execute(element: HTMLElement): Promise<void> {
+        const targetElement = this.findTopmostVisibleSection(element);
+
+        if (targetElement) {
+            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
+            await this.scrollToElement(element, targetElement);
+        } else {
+            this.logger.debug("No visible section found");
+        }
+    }
+}
+
+/**
+ * Scrolls using the last visible section as the target when scrolling down.
+ */
+export class BookendScrollerDown extends SectionScroller {
+    /**
+     * Creates a new BookendScrollerDown instance.
+     */
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("BookendScrollerDown");
+    }
+
+    /**
+     * Finds the last visible section in the viewport.
+     * @returns The last visible section HTMLElement or null.
+     */
+    private findLastVisibleSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+        const containerRect = container.getBoundingClientRect();
+
+        // Find the last section that is visible in the viewport
+        let lastVisible: HTMLElement | null = null;
+
+        for (const section of sections) {
+            const sectionRect = section.getBoundingClientRect();
+
+            // Check if the section is visible in the viewport
+            // (its top is above the bottom of the viewport and its bottom is below the top)
+            if (sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top) {
+                lastVisible = section;
+            }
+        }
+
+        return lastVisible;
+    }
+
+    /**
+     * Executes the bookend scroll down action.
+     */
+    async execute(element: HTMLElement): Promise<void> {
+        const targetElement = this.findLastVisibleSection(element);
+
+        if (targetElement) {
+            this.logger.debug(`Scrolling to: ${targetElement.tagName}.${targetElement.id}`);
+            await this.scrollToElement(element, targetElement);
+        } else {
+            this.logger.debug("No visible section found");
+        }
+    }
+}
