@@ -442,39 +442,20 @@ export class AutoScrollerDown extends AutoScroller {
 }
 
 /**
- * Scrolls using the topmost visible section as the target when scrolling up.
+ * Base class for edge scrollers that target visible section boundaries.
  */
-export class EdgeScrollerUp extends SectionScroller {
+abstract class EdgeScroller extends SectionScroller {
     /**
-     * Creates a new EdgeScrollerUp instance.
+     * Finds the target visible section in the viewport.
+     * @returns The target section HTMLElement or null.
      */
-    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
-        super(engine, options);
-        this.logger = Logger.getLogger("EdgeScrollerUp");
-    }
+    protected abstract findTargetSection(container: HTMLElement): HTMLElement | null;
 
     /**
-     * Finds the topmost visible section in the viewport.
-     * @returns The topmost visible section HTMLElement or null.
-     */
-    private findTopmostVisibleSection(container: HTMLElement): HTMLElement | null {
-        const sections = this.getSectionElements(container);
-
-        // Find the first section that is visible in the viewport
-        for (const section of sections) {
-            if (this.isElementVisible(section, container)) {
-                return section;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Executes the bookend scroll up action.
+     * Executes the edge scroll action.
      */
     async execute(element: HTMLElement): Promise<void> {
-        const targetElement = this.findTopmostVisibleSection(element);
+        const targetElement = this.findTargetSection(element);
 
         if (targetElement) {
             this.logger.debug(
@@ -488,9 +469,38 @@ export class EdgeScrollerUp extends SectionScroller {
 }
 
 /**
- * Scrolls using the last visible section as the target when scrolling down.
+ * Scrolls to the topmost visible section, positioning it at the top of the viewport.
  */
-export class EdgeScrollerDown extends SectionScroller {
+export class EdgeScrollerUp extends EdgeScroller {
+    /**
+     * Creates a new EdgeScrollerUp instance.
+     */
+    constructor(engine: ScrollEngine, options: SectionScrollSettings) {
+        super(engine, options);
+        this.logger = Logger.getLogger("EdgeScrollerUp");
+    }
+
+    /**
+     * Finds the topmost visible section in the viewport.
+     * @returns The topmost visible section HTMLElement or null.
+     */
+    protected findTargetSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+
+        for (const section of sections) {
+            if (this.isElementVisible(section, container)) {
+                return section;
+            }
+        }
+
+        return null;
+    }
+}
+
+/**
+ * Scrolls to the bottommost visible section, positioning it at the top of the viewport.
+ */
+export class EdgeScrollerDown extends EdgeScroller {
     /**
      * Creates a new EdgeScrollerDown instance.
      */
@@ -500,13 +510,13 @@ export class EdgeScrollerDown extends SectionScroller {
     }
 
     /**
-     * Finds the last visible section in the viewport.
-     * @returns The last visible section HTMLElement or null.
+     * Finds the bottommost visible section in the viewport.
+     * @returns The bottommost visible section HTMLElement or null.
      */
-    private findLastVisibleSection(container: HTMLElement): HTMLElement | null {
+    protected findTargetSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
 
-        // Iterate in reverse to find the last visible section more efficiently
+        // Iterate in reverse to find the last visible section
         for (let i = sections.length - 1; i >= 0; i--) {
             if (this.isElementVisible(sections[i], container)) {
                 return sections[i];
@@ -514,21 +524,5 @@ export class EdgeScrollerDown extends SectionScroller {
         }
 
         return null;
-    }
-
-    /**
-     * Executes the bookend scroll down action.
-     */
-    async execute(element: HTMLElement): Promise<void> {
-        const targetElement = this.findLastVisibleSection(element);
-
-        if (targetElement) {
-            this.logger.debug(
-                `Scrolling to: ${targetElement.tagName}.${targetElement.id || targetElement.className}`
-            );
-            await this.scrollToElement(element, targetElement);
-        } else {
-            this.logger.debug("No visible section found");
-        }
     }
 }
