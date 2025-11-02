@@ -87,12 +87,12 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
     {
         id: "stomp-bookend-scroll-up",
         name: "Bookend scroll up",
-        description: "Scroll to the topmost visible section heading",
+        description: "Scroll to the topmost visible section element",
     },
     {
         id: "stomp-bookend-scroll-down",
         name: "Bookend scroll down",
-        description: "Scroll to the bottommost visible section heading",
+        description: "Scroll to the bottommost visible section element",
     },
 ];
 

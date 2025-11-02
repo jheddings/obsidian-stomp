@@ -506,16 +506,14 @@ export class BookendScrollerDown extends SectionScroller {
     private findLastVisibleSection(container: HTMLElement): HTMLElement | null {
         const sections = this.getSectionElements(container);
 
-        // Find the last section that is visible in the viewport
-        let lastVisible: HTMLElement | null = null;
-
-        for (const section of sections) {
-            if (this.isElementVisible(section, container)) {
-                lastVisible = section;
+        // Iterate in reverse to find the last visible section more efficiently
+        for (let i = sections.length - 1; i >= 0; i--) {
+            if (this.isElementVisible(sections[i], container)) {
+                return sections[i];
             }
         }
 
-        return lastVisible;
+        return null;
     }
 
     /**
