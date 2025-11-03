@@ -34,6 +34,7 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         name: "Stop scrolling",
         description: "Stop any active scroll animation",
     },
+    // page scroll commands
     {
         id: "stomp-page-scroll-up",
         name: "Scroll page up",
@@ -45,6 +46,17 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         description: "Scroll down by a percentage of the viewport height",
     },
     {
+        id: "stomp-quick-scroll-up",
+        name: "Quick scroll up",
+        description: "Fast scroll up with full viewport height",
+    },
+    {
+        id: "stomp-quick-scroll-down",
+        name: "Quick scroll down",
+        description: "Fast scroll down with full viewport height",
+    },
+    // section scroll commands
+    {
         id: "stomp-section-scroll-next",
         name: "Scroll to next section",
         description: "Scroll to the next heading or section element",
@@ -55,15 +67,16 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         description: "Scroll to the previous heading or section element",
     },
     {
-        id: "stomp-quick-scroll-up",
-        name: "Quick scroll up",
-        description: "Fast scroll up with full viewport height",
+        id: "stomp-edge-scroll-top",
+        name: "Scroll to top edge section",
+        description: "Scroll to the topmost visible section element",
     },
     {
-        id: "stomp-quick-scroll-down",
-        name: "Quick scroll down",
-        description: "Fast scroll down with full viewport height",
+        id: "stomp-edge-scroll-bottom",
+        name: "Scroll to bottom edge section",
+        description: "Scroll to the bottommost visible section element",
     },
+    // auto scroll commands
     {
         id: "stomp-auto-scroll-up",
         name: "Auto scroll up",
@@ -83,16 +96,6 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         id: "stomp-toggle-auto-scroll-down",
         name: "Toggle auto scroll down",
         description: "Toggles auto scrolling down",
-    },
-    {
-        id: "stomp-edge-scroll-up",
-        name: "Edge scroll up",
-        description: "Scroll to the topmost visible section element",
-    },
-    {
-        id: "stomp-edge-scroll-down",
-        name: "Edge scroll down",
-        description: "Scroll to the bottommost visible section element",
     },
 ];
 
@@ -114,6 +117,7 @@ export class ScrollController {
     ) {
         this.scrollStrategies.set("stomp-stop-scroll", new ScrollStopper(this.engine));
 
+        // page scroll strategies
         this.scrollStrategies.set(
             "stomp-page-scroll-up",
             new PageScrollerUp(this.engine, settings.pageScrollSettings)
@@ -130,6 +134,8 @@ export class ScrollController {
             "stomp-quick-scroll-down",
             new PageScrollerDown(this.engine, settings.quickScrollSettings)
         );
+
+        // section scroll strategies
         this.scrollStrategies.set(
             "stomp-section-scroll-next",
             new SectionScrollerNext(this.engine, settings.sectionScrollSettings)
@@ -138,7 +144,16 @@ export class ScrollController {
             "stomp-section-scroll-prev",
             new SectionScrollerPrev(this.engine, settings.sectionScrollSettings)
         );
+        this.scrollStrategies.set(
+            "stomp-edge-scroll-top",
+            new EdgeScrollerUp(this.engine, settings.sectionScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-edge-scroll-bottom",
+            new EdgeScrollerDown(this.engine, settings.sectionScrollSettings)
+        );
 
+        // auto scroll strategies
         const autoScrollUp = new AutoScrollerUp(this.engine, settings.autoScrollSettings);
         this.scrollStrategies.set("stomp-auto-scroll-up", autoScrollUp);
         this.scrollStrategies.set(
@@ -151,15 +166,6 @@ export class ScrollController {
         this.scrollStrategies.set(
             "stomp-toggle-auto-scroll-down",
             new ScrollToggler(this.engine, autoScrollDown)
-        );
-
-        this.scrollStrategies.set(
-            "stomp-edge-scroll-up",
-            new EdgeScrollerUp(this.engine, settings.sectionScrollSettings)
-        );
-        this.scrollStrategies.set(
-            "stomp-edge-scroll-down",
-            new EdgeScrollerDown(this.engine, settings.sectionScrollSettings)
         );
     }
 
