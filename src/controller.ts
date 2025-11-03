@@ -85,12 +85,12 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         description: "Toggles auto scrolling down",
     },
     {
-        id: "stomp-bookend-scroll-up",
+        id: "stomp-edge-scroll-up",
         name: "Edge scroll up",
         description: "Scroll to the topmost visible section element",
     },
     {
-        id: "stomp-bookend-scroll-down",
+        id: "stomp-edge-scroll-down",
         name: "Edge scroll down",
         description: "Scroll to the bottommost visible section element",
     },
@@ -154,11 +154,11 @@ export class ScrollController {
         );
 
         this.scrollStrategies.set(
-            "stomp-bookend-scroll-up",
+            "stomp-edge-scroll-up",
             new EdgeScrollerUp(this.engine, settings.sectionScrollSettings)
         );
         this.scrollStrategies.set(
-            "stomp-bookend-scroll-down",
+            "stomp-edge-scroll-down",
             new EdgeScrollerDown(this.engine, settings.sectionScrollSettings)
         );
     }
