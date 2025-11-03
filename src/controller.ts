@@ -12,6 +12,8 @@ import {
     AutoScrollerDown,
     ViewScroller,
     ScrollToggler,
+    EdgeScrollerUp,
+    EdgeScrollerDown,
 } from "./scroller";
 
 /**
@@ -82,6 +84,16 @@ export const SCROLL_COMMANDS: ScrollCommand[] = [
         name: "Toggle auto scroll down",
         description: "Toggles auto scrolling down",
     },
+    {
+        id: "stomp-edge-scroll-up",
+        name: "Edge scroll up",
+        description: "Scroll to the topmost visible section element",
+    },
+    {
+        id: "stomp-edge-scroll-down",
+        name: "Edge scroll down",
+        description: "Scroll to the bottommost visible section element",
+    },
 ];
 
 /**
@@ -139,6 +151,15 @@ export class ScrollController {
         this.scrollStrategies.set(
             "stomp-toggle-auto-scroll-down",
             new ScrollToggler(this.engine, autoScrollDown)
+        );
+
+        this.scrollStrategies.set(
+            "stomp-edge-scroll-up",
+            new EdgeScrollerUp(this.engine, settings.sectionScrollSettings)
+        );
+        this.scrollStrategies.set(
+            "stomp-edge-scroll-down",
+            new EdgeScrollerDown(this.engine, settings.sectionScrollSettings)
         );
     }
 
