@@ -21,6 +21,7 @@ export interface PageScrollSettings {
  */
 export interface SectionScrollSettings {
     scrollDuration: number;
+    edgeInset: number;
 
     stopAtH1: boolean;
     stopAtH2: boolean;

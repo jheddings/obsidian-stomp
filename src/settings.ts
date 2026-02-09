@@ -213,6 +213,43 @@ class SectionScrollDuration extends SliderSetting {
 }
 
 /**
+ * Setting for the section edge inset.
+ */
+class SectionEdgeInset extends SliderSetting {
+    constructor(private plugin: StompPlugin) {
+        super({
+            name: "Section edge inset",
+            description: "Pixels to inset from the viewport edge when detecting visible sections.",
+        });
+    }
+
+    get value(): number {
+        return this.plugin.settings.sectionScrollSettings.edgeInset ?? this.default;
+    }
+
+    set value(val: number) {
+        this.plugin.settings.sectionScrollSettings.edgeInset = val;
+        this.plugin.saveSettings();
+    }
+
+    get default(): number {
+        return 0;
+    }
+
+    get minimum(): number {
+        return 0;
+    }
+
+    get maximum(): number {
+        return 200;
+    }
+
+    get step(): number {
+        return 5;
+    }
+}
+
+/**
  * Setting for stop-on-heading-1 behavior.
  */
 class StopAtHeading1 extends ToggleSetting {
@@ -474,6 +511,7 @@ class SectionScrollSettings extends SettingsTabPage {
      */
     display(containerEl: HTMLElement): void {
         new SectionScrollDuration(this.plugin).display(containerEl);
+        new SectionEdgeInset(this.plugin).display(containerEl);
         new StopAtHeading1(this.plugin).display(containerEl);
         new StopAtHeading2(this.plugin).display(containerEl);
         new StopAtHorizontalRule(this.plugin).display(containerEl);

@@ -160,7 +160,7 @@ export class PageScrollerDown extends PageScroller {
 abstract class SectionScroller extends ViewScroller {
     static readonly SECTION_MINIMUM_GAP = 5;
 
-    private options: SectionScrollSettings;
+    protected options: SectionScrollSettings;
     private stopSelectors: string[] = [];
 
     /**
@@ -271,9 +271,12 @@ abstract class SectionScroller extends ViewScroller {
         const sectionRect = element.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Check if the section is visible in the viewport
-        // (its top is above the bottom of the viewport and its bottom is below the top)
-        return sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top;
+        // Check if the section is visible in the viewport, inset by the configured edge offset
+        // (its top is above the inset bottom and its bottom is below the inset top)
+        return (
+            sectionRect.top < containerRect.bottom - this.options.edgeInset &&
+            sectionRect.bottom > containerRect.top + this.options.edgeInset
+        );
     }
 }
 
