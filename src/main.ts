@@ -42,7 +42,8 @@ const config = new PluginConfig<StompPluginSettings>({
                 "stomp-edge-scroll-down": "stomp-edge-scroll-bottom",
             };
 
-            for (const binding of data.commandBindings ?? []) {
+            const bindings = (data.commandBindings ?? []) as Array<{ commandId: string }>;
+            for (const binding of bindings) {
                 if (binding.commandId in renames) {
                     binding.commandId = renames[binding.commandId];
                 }
@@ -87,7 +88,7 @@ export default class StompPlugin extends Plugin {
     }
 
     async saveSettings() {
-        await this.saveData(this.settings);
+        await config.save(this, this.settings);
 
         this.applySettings();
     }
