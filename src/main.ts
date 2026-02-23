@@ -31,6 +31,26 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
     },
 };
 
+const config = new PluginConfig<StompPluginSettings>({
+    defaults: DEFAULT_SETTINGS,
+    migrations: [
+        // v0 → v1: rename edge scroll command IDs (defensive — idempotent for
+        // users who already have the new names or never used edge scroll)
+        (data) => {
+            const renames: Record<string, string> = {
+                "stomp-edge-scroll-up": "stomp-edge-scroll-top",
+                "stomp-edge-scroll-down": "stomp-edge-scroll-bottom",
+            };
+
+            for (const binding of data.commandBindings ?? []) {
+                if (binding.commandId in renames) {
+                    binding.commandId = renames[binding.commandId];
+                }
+            }
+        },
+    ],
+});
+
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
 
@@ -61,7 +81,7 @@ export default class StompPlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = await config.load(this);
 
         this.applySettings();
     }
