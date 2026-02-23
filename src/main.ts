@@ -1,6 +1,6 @@
 import { MarkdownPreviewView, MarkdownView, Plugin } from "obsidian";
 import { StompSettingsTab } from "./settings";
-import { Logger, LogLevel } from "obskit";
+import { Logger, LogLevel, PluginConfig } from "obskit";
 import { SCROLL_COMMANDS, ScrollController } from "./controller";
 import { findBindingByKey, StompPluginSettings } from "./config";
 
@@ -30,6 +30,27 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
         scrollSpeed: 100, // pixels per second
     },
 };
+
+const config = new PluginConfig<StompPluginSettings>({
+    defaults: DEFAULT_SETTINGS,
+    migrations: [
+        // v0 → v1: rename edge scroll command IDs (defensive — idempotent for
+        // users who already have the new names or never used edge scroll)
+        (data) => {
+            const renames: Record<string, string> = {
+                "stomp-edge-scroll-up": "stomp-edge-scroll-top",
+                "stomp-edge-scroll-down": "stomp-edge-scroll-bottom",
+            };
+
+            const bindings = (data.commandBindings ?? []) as Array<{ commandId: string }>;
+            for (const binding of bindings) {
+                if (binding.commandId in renames) {
+                    binding.commandId = renames[binding.commandId];
+                }
+            }
+        },
+    ],
+});
 
 export default class StompPlugin extends Plugin {
     settings: StompPluginSettings;
@@ -61,13 +82,13 @@ export default class StompPlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = await config.load(this);
 
         this.applySettings();
     }
 
     async saveSettings() {
-        await this.saveData(this.settings);
+        await config.save(this, this.settings);
 
         this.applySettings();
     }

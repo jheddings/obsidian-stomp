@@ -39,14 +39,14 @@ export interface AutoScrollSettings {
 /**
  * Main plugin settings structure.
  */
-export interface StompPluginSettings {
+export type StompPluginSettings = {
     commandBindings: KeyBinding[];
     pageScrollSettings: PageScrollSettings;
     quickScrollSettings: PageScrollSettings;
     sectionScrollSettings: SectionScrollSettings;
     autoScrollSettings: AutoScrollSettings;
     logLevel: LogLevel;
-}
+};
 
 /**
  * Gets the key binding for a command ID.
