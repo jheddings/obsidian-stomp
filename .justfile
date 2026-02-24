@@ -10,21 +10,23 @@ setup:
 # auto-format and lint-fix
 tidy:
 	npx prettier --write .
-	npx eslint src --fix
+	npx eslint . --fix
 
 # run format and lint checks (no fix)
 check:
 	npx prettier --check .
-	npx eslint src
+	npx eslint .
 
 # full preflight: build + check
-preflight: build
-	npx prettier --check .
-	npx eslint src
+preflight: build check
 
 # build the plugin
-build:
+build: setup
 	npm run build
+
+# run the development server
+run: setup
+	npm run dev
 
 # verify no uncommitted changes to tracked files
 repo-guard:

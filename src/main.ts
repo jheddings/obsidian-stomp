@@ -34,8 +34,7 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 const config = new PluginConfig<StompPluginSettings>({
     defaults: DEFAULT_SETTINGS,
     migrations: [
-        // v0 → v1: rename edge scroll command IDs (defensive — idempotent for
-        // users who already have the new names or never used edge scroll)
+        // v0 → v1: rename edge scroll command IDs
         (data) => {
             const renames: Record<string, string> = {
                 "stomp-edge-scroll-up": "stomp-edge-scroll-top",
