@@ -282,17 +282,23 @@ abstract class SectionScroller extends ViewScroller {
      *
      * Section elements may be wrapped in container divs (e.g., Obsidian's
      * markdown block rendering), so this walks up to the first ancestor that
-     * has siblings before traversing.
+     * has siblings before traversing. Stops at the container boundary.
      *
      * @returns The last content element in the section.
      */
-    protected findSectionEnd(sectionElement: HTMLElement, sections: HTMLElement[]): HTMLElement {
-        const sectionSet = new Set(sections);
-
+    protected findSectionEnd(
+        sectionElement: HTMLElement,
+        sections: HTMLElement[],
+        container: HTMLElement
+    ): HTMLElement {
         // Walk up to find the right DOM level — section elements may be nested
         // inside wrapper divs with no siblings at the element level.
         let block: HTMLElement = sectionElement;
-        while (!block.nextElementSibling && block.parentElement) {
+        while (
+            !block.nextElementSibling &&
+            block.parentElement &&
+            block.parentElement !== container
+        ) {
             block = block.parentElement;
         }
 
@@ -302,7 +308,7 @@ abstract class SectionScroller extends ViewScroller {
         while (sibling) {
             if (sibling instanceof HTMLElement) {
                 // Stop if this sibling is or contains a section stop element
-                if (sectionSet.has(sibling) || sections.some((s) => sibling!.contains(s))) {
+                if (sections.some((s) => sibling!.contains(s))) {
                     break;
                 }
                 lastContent = sibling;
@@ -497,7 +503,7 @@ export class EdgeScrollerUp extends EdgeScroller {
 
         // Find the last content element in this section and align its bottom
         // to the viewport bottom — immune to inter-section margins/padding.
-        const sectionEnd = this.findSectionEnd(target, sections);
+        const sectionEnd = this.findSectionEnd(target, sections, element);
         const endRect = sectionEnd.getBoundingClientRect();
         const containerRect = element.getBoundingClientRect();
         const scrollTarget = element.scrollTop + endRect.bottom - containerRect.bottom;
