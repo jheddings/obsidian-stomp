@@ -218,8 +218,9 @@ class SectionScrollDuration extends SliderSetting {
 class SectionEdgeInset extends SliderSetting {
     constructor(private plugin: StompPlugin) {
         super({
-            name: "Section edge inset",
-            description: "Pixels to inset from the viewport edge when detecting visible sections.",
+            name: "Edge scroll inset",
+            description:
+                "Pixels to inset from the viewport edge when detecting visible sections for edge scroll commands.",
         });
     }
 
