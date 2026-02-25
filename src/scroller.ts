@@ -184,7 +184,7 @@ abstract class SectionScroller extends ViewScroller {
     }
 
     /**
-     * Scrolls so the top of the target element aligns with the top of the container.
+     * Scrolls to the specified element in the container.
      */
     protected async scrollToElement(container: HTMLElement, target: HTMLElement): Promise<void> {
         const targetTop = this.getElementScrollPosition(container, target);
@@ -274,49 +274,6 @@ abstract class SectionScroller extends ViewScroller {
         // Check if the section is visible in the viewport
         // (its top is above the bottom of the viewport and its bottom is below the top)
         return sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top;
-    }
-
-    /**
-     * Finds the last content element belonging to a section by walking forward
-     * through siblings until the next section stop element is encountered.
-     *
-     * Section elements may be wrapped in container divs (e.g., Obsidian's
-     * markdown block rendering), so this walks up to the first ancestor that
-     * has siblings before traversing. Stops at the container boundary.
-     *
-     * @returns The last content element in the section.
-     */
-    protected findSectionEnd(
-        sectionElement: HTMLElement,
-        sections: HTMLElement[],
-        container: HTMLElement
-    ): HTMLElement {
-        // Walk up to find the right DOM level — section elements may be nested
-        // inside wrapper divs with no siblings at the element level.
-        let block: HTMLElement = sectionElement;
-        while (
-            !block.nextElementSibling &&
-            block.parentElement &&
-            block.parentElement !== container
-        ) {
-            block = block.parentElement;
-        }
-
-        let lastContent = block;
-        let sibling = block.nextElementSibling;
-
-        while (sibling) {
-            if (sibling instanceof HTMLElement) {
-                // Stop if this sibling is or contains a section stop element
-                if (sections.some((s) => sibling!.contains(s))) {
-                    break;
-                }
-                lastContent = sibling;
-            }
-            sibling = sibling.nextElementSibling;
-        }
-
-        return lastContent;
     }
 }
 
@@ -417,55 +374,33 @@ export class SectionScrollerPrev extends SectionScroller {
 
 /**
  * Base class for edge scrollers that target visible section boundaries.
- *
- * Subclasses implement two methods:
- * - findTargetSection: which section to target
- * - computeScrollTarget: where to scroll relative to that section
  */
 abstract class EdgeScroller extends SectionScroller {
     /**
-     * Finds the target section in or near the viewport.
+     * Finds the target visible section in the viewport.
      * @returns The target section HTMLElement or null.
      */
-    protected abstract findTargetSection(
-        container: HTMLElement,
-        sections: HTMLElement[]
-    ): HTMLElement | null;
-
-    /**
-     * Computes the scroll position for the given target section.
-     * @returns The target scrollTop value in pixels.
-     */
-    protected abstract computeScrollTarget(
-        container: HTMLElement,
-        target: HTMLElement,
-        sections: HTMLElement[]
-    ): number;
+    protected abstract findTargetSection(container: HTMLElement): HTMLElement | null;
 
     /**
      * Executes the edge scroll action.
      */
     async execute(element: HTMLElement): Promise<void> {
-        const sections = this.getSectionElements(element);
-        const target = this.findTargetSection(element, sections);
+        const targetElement = this.findTargetSection(element);
 
-        if (!target) {
-            this.logger.debug("No target section found");
-            return;
+        if (targetElement) {
+            this.logger.debug(
+                `Scrolling to: ${targetElement.tagName}.${targetElement.id || targetElement.className}`
+            );
+            await this.scrollToElement(element, targetElement);
+        } else {
+            this.logger.debug("No visible section found");
         }
-
-        this.logger.debug(`Scrolling to: ${target.tagName}.${target.id || target.className}`);
-        const scrollTarget = this.computeScrollTarget(element, target, sections);
-        await this.engine.smoothScrollTo(scrollTarget, this.scrollDurationMs);
     }
 }
 
 /**
- * Scrolls so the topmost visible section's content ends at the bottom of the viewport.
- *
- * Finds the section element whose heading owns the viewport top, then positions
- * the viewport so the section's last content element aligns with the viewport
- * bottom — showing all content belonging to the current section.
+ * Scrolls to the topmost visible section, positioning it at the top of the viewport.
  */
 export class EdgeScrollerUp extends EdgeScroller {
     /**
@@ -477,38 +412,19 @@ export class EdgeScrollerUp extends EdgeScroller {
     }
 
     /**
-     * Finds the section that owns the viewport top: the last section element
-     * whose heading is at or above the current scroll position.
+     * Finds the topmost visible section in the viewport.
+     * @returns The topmost visible section HTMLElement or null.
      */
-    protected findTargetSection(
-        container: HTMLElement,
-        sections: HTMLElement[]
-    ): HTMLElement | null {
-        let target: HTMLElement | null = null;
+    protected findTargetSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+
         for (const section of sections) {
-            const sectionTop = this.getElementScrollPosition(container, section);
-            if (sectionTop <= container.scrollTop + SectionScroller.SECTION_MINIMUM_GAP) {
-                target = section;
-            } else {
-                break;
+            if (this.isElementVisible(section, container)) {
+                return section;
             }
         }
-        return target;
-    }
 
-    /**
-     * Computes scroll position to align the section's content end with the
-     * viewport bottom.
-     */
-    protected computeScrollTarget(
-        container: HTMLElement,
-        target: HTMLElement,
-        sections: HTMLElement[]
-    ): number {
-        const sectionEnd = this.findSectionEnd(target, sections, container);
-        const endRect = sectionEnd.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        return container.scrollTop + endRect.bottom - containerRect.bottom;
+        return null;
     }
 }
 
@@ -528,28 +444,17 @@ export class EdgeScrollerDown extends EdgeScroller {
      * Finds the bottommost visible section in the viewport.
      * @returns The bottommost visible section HTMLElement or null.
      */
-    protected findTargetSection(
-        container: HTMLElement,
-        sections: HTMLElement[]
-    ): HTMLElement | null {
+    protected findTargetSection(container: HTMLElement): HTMLElement | null {
+        const sections = this.getSectionElements(container);
+
         // Iterate in reverse to find the last visible section
         for (let i = sections.length - 1; i >= 0; i--) {
             if (this.isElementVisible(sections[i], container)) {
                 return sections[i];
             }
         }
-        return null;
-    }
 
-    /**
-     * Computes scroll position to align the target's top with the viewport top.
-     */
-    protected computeScrollTarget(
-        container: HTMLElement,
-        target: HTMLElement,
-        _sections: HTMLElement[]
-    ): number {
-        return this.getElementScrollPosition(container, target);
+        return null;
     }
 }
 
