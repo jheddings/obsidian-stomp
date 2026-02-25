@@ -184,12 +184,28 @@ abstract class SectionScroller extends ViewScroller {
     }
 
     /**
-     * Scrolls to the specified element in the container.
+     * Scrolls so the top of the target element aligns with the top of the container.
      */
     protected async scrollToElement(container: HTMLElement, target: HTMLElement): Promise<void> {
         const targetTop = this.getElementScrollPosition(container, target);
         this.logger.debug(
             `Section scroll target: ${target.tagName}.${target.className} @ ${targetTop}px`
+        );
+        await this.engine.smoothScrollTo(targetTop, this.scrollDurationMs);
+    }
+
+    /**
+     * Scrolls so the bottom of the target element aligns with the bottom of the container.
+     */
+    protected async scrollToElementBottom(
+        container: HTMLElement,
+        target: HTMLElement
+    ): Promise<void> {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = target.getBoundingClientRect();
+        const targetTop = container.scrollTop + elementRect.bottom - containerRect.bottom;
+        this.logger.debug(
+            `Section scroll target (bottom): ${target.tagName}.${target.className} @ ${targetTop}px`
         );
         await this.engine.smoothScrollTo(targetTop, this.scrollDurationMs);
     }
@@ -400,7 +416,7 @@ abstract class EdgeScroller extends SectionScroller {
 }
 
 /**
- * Scrolls to the topmost visible section, positioning it at the top of the viewport.
+ * Scrolls to the topmost visible section, positioning its bottom at the bottom of the viewport.
  */
 export class EdgeScrollerUp extends EdgeScroller {
     /**
@@ -425,6 +441,22 @@ export class EdgeScrollerUp extends EdgeScroller {
         }
 
         return null;
+    }
+
+    /**
+     * Executes the edge scroll action, aligning the bottom of the target to the viewport bottom.
+     */
+    async execute(element: HTMLElement): Promise<void> {
+        const targetElement = this.findTargetSection(element);
+
+        if (targetElement) {
+            this.logger.debug(
+                `Scrolling to: ${targetElement.tagName}.${targetElement.id || targetElement.className}`
+            );
+            await this.scrollToElementBottom(element, targetElement);
+        } else {
+            this.logger.debug("No visible section found");
+        }
     }
 }
 
