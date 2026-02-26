@@ -1,7 +1,7 @@
-const typescriptEslint = require("@typescript-eslint/eslint-plugin");
-const typescriptParser = require("@typescript-eslint/parser");
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
+import typescriptParser from "@typescript-eslint/parser";
 
-module.exports = [
+export default [
     {
         // ignore generated and build files
         ignores: ["main.js", "dist/**", "node_modules/**", "*.d.ts"],

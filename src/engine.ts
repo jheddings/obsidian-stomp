@@ -15,7 +15,7 @@ export class ScrollEngine {
     private static readonly ANIMATION_FRAME_THRESHOLD = 5;
 
     private logger: Logger = Logger.getLogger("ScrollEngine");
-    private animationId: NodeJS.Timeout | null = null;
+    private animationId: number | null = null;
     private activeElement: HTMLElement | null = null;
 
     get isActive(): boolean {
@@ -57,7 +57,7 @@ export class ScrollEngine {
      */
     stopAnimation(): void {
         if (this.animationId !== null) {
-            clearTimeout(this.animationId);
+            window.clearTimeout(this.animationId);
             this.logger.debug(`Animation stopped [${this.animationId}]`);
             this.animationId = null;
         }
@@ -135,10 +135,10 @@ export class ScrollEngine {
                     return;
                 }
 
-                this.animationId = setTimeout(animate, frameInterval);
+                this.animationId = window.setTimeout(animate, frameInterval);
             };
 
-            this.animationId = setTimeout(animate, frameInterval);
+            this.animationId = window.setTimeout(animate, frameInterval);
         });
     }
 

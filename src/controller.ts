@@ -203,7 +203,7 @@ export class ScrollController {
             await scroll.execute(element);
         } catch (error) {
             this.logger.error("Error during scroll:", error);
-            new Notice("❌ STOMP: Scroll error", 2000);
+            new Notice("Scroll error", 2000);
         }
 
         this.engine.deactivate();
@@ -239,7 +239,7 @@ export class ScrollController {
         ];
 
         for (const selector of candidates) {
-            const element = containerEl.querySelector(selector) as HTMLElement;
+            const element = containerEl.querySelector<HTMLElement>(selector);
             if (element && this.isScrollable(element)) {
                 return element;
             }

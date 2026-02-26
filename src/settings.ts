@@ -44,7 +44,7 @@ class PageScrollDuration extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.pageScrollSettings.scrollDuration = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -81,7 +81,7 @@ class PageScrollAmount extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.pageScrollSettings.scrollAmount = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -118,7 +118,7 @@ class QuickScrollDuration extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.quickScrollSettings.scrollDuration = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -155,7 +155,7 @@ class QuickScrollAmount extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.quickScrollSettings.scrollAmount = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -192,7 +192,7 @@ class SectionScrollDuration extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.sectionScrollSettings.scrollDuration = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -230,7 +230,7 @@ class SectionEdgeInset extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.sectionScrollSettings.edgeInset = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -267,7 +267,7 @@ class StopAtHeading1 extends ToggleSetting {
 
     set value(val: boolean) {
         this.plugin.settings.sectionScrollSettings.stopAtH1 = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): boolean {
@@ -292,7 +292,7 @@ class StopAtHeading2 extends ToggleSetting {
 
     set value(val: boolean) {
         this.plugin.settings.sectionScrollSettings.stopAtH2 = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): boolean {
@@ -317,7 +317,7 @@ class StopAtHorizontalRule extends ToggleSetting {
 
     set value(val: boolean) {
         this.plugin.settings.sectionScrollSettings.stopAtHR = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): boolean {
@@ -347,7 +347,7 @@ class CustomSectionElements extends TextAreaSetting {
             .filter((line) => line.length > 0);
 
         this.plugin.settings.sectionScrollSettings.stopAtCustom = elements;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): string {
@@ -376,7 +376,7 @@ class AutoScrollSpeed extends SliderSetting {
 
     set value(val: number) {
         this.plugin.settings.autoScrollSettings.scrollSpeed = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): number {
@@ -413,7 +413,7 @@ class LogLevelSetting extends DropdownSetting<LogLevel> {
 
     set value(val: LogLevel) {
         this.plugin.settings.logLevel = val;
-        this.plugin.saveSettings();
+        void this.plugin.saveSettings();
     }
 
     get default(): LogLevel {
