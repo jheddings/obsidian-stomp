@@ -1,44 +1,31 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
+import { defineConfig } from "eslint/config";
+import obsidianmd from "eslint-plugin-obsidianmd";
+import globals from "globals";
 
-export default [
+export default defineConfig([
+    ...obsidianmd.configs.recommended,
     {
-        // ignore generated and build files
         ignores: ["main.js", "dist/**", "node_modules/**", "*.d.ts"],
     },
     {
         files: ["**/*.ts", "**/*.tsx"],
         languageOptions: {
             parser: typescriptParser,
-            ecmaVersion: 2021,
-            sourceType: "module",
+            globals: globals.browser,
             parserOptions: {
                 project: "./tsconfig.json",
             },
         },
-        plugins: {
-            "@typescript-eslint": typescriptEslint,
-        },
         rules: {
-            semi: "off",
-            "@typescript-eslint/member-delimiter-style": "off",
-            "@typescript-eslint/quotes": "off",
-            "@typescript-eslint/indent": "off",
-            "@typescript-eslint/comma-dangle": "off",
             "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-            "@typescript-eslint/explicit-function-return-type": "off",
-            "@typescript-eslint/explicit-module-boundary-types": "off",
             "@typescript-eslint/no-explicit-any": "warn",
         },
     },
     {
-        files: ["**/*.js", "**/*.jsx"],
-        languageOptions: {
-            ecmaVersion: 2021,
-            sourceType: "module",
-        },
+        files: ["package.json"],
         rules: {
-            semi: "off",
+            "depend/ban-dependencies": "off",
         },
     },
-];
+]);

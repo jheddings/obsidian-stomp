@@ -316,7 +316,8 @@ abstract class SectionScroller extends ViewScroller {
         while (sibling) {
             if (sibling instanceof HTMLElement) {
                 // Stop if this sibling is or contains a section stop element
-                if (sections.some((s) => sibling!.contains(s))) {
+                const current = sibling;
+                if (sections.some((s) => current.contains(s))) {
                     break;
                 }
                 lastContent = sibling;
