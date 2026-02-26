@@ -68,7 +68,7 @@ export default class StompPlugin extends Plugin {
             this.addCommand({
                 id: c.id,
                 name: c.name,
-                callback: () => this.controller.executeCommand(c.id),
+                callback: () => void this.controller.executeCommand(c.id),
             });
         });
 
@@ -77,7 +77,7 @@ export default class StompPlugin extends Plugin {
         this.logger.info("Plugin loaded");
     }
 
-    async onunload() {
+    onunload() {
         this.logger.info("Plugin unloaded");
     }
 
@@ -117,7 +117,7 @@ export default class StompPlugin extends Plugin {
         evt.stopImmediatePropagation();
 
         this.logger.debug(`Processing key binding [${evt.key}] : ${binding.commandId}`);
-        this.controller.executeCommand(binding.commandId);
+        void this.controller.executeCommand(binding.commandId);
 
         return false;
     };

@@ -37,9 +37,10 @@ export class ScrollStopper extends ViewScroller {
     /**
      * Executes the stop scroll action.
      */
-    async execute(_element: HTMLElement): Promise<void> {
+    execute(_element: HTMLElement): Promise<void> {
         this.logger.debug("Stopping scroll animation");
         this.engine.stopAnimation();
+        return Promise.resolve();
     }
 }
 
@@ -65,7 +66,7 @@ export class ScrollToggler extends ViewScroller {
     async execute(element: HTMLElement): Promise<void> {
         if (this.engine.isActive) {
             this.logger.debug("Stopping current scroll");
-            await this.engine.stopAnimation();
+            this.engine.stopAnimation();
         } else {
             this.logger.debug("Executing scroll action");
             await this.scroller.execute(element);
@@ -315,7 +316,8 @@ abstract class SectionScroller extends ViewScroller {
         while (sibling) {
             if (sibling instanceof HTMLElement) {
                 // Stop if this sibling is or contains a section stop element
-                if (sections.some((s) => sibling!.contains(s))) {
+                const current = sibling;
+                if (sections.some((s) => current.contains(s))) {
                     break;
                 }
                 lastContent = sibling;
