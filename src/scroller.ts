@@ -271,9 +271,16 @@ abstract class SectionScroller extends ViewScroller {
         const sectionRect = element.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Check if the section is visible in the viewport
-        // (its top is above the bottom of the viewport and its bottom is below the top)
-        return sectionRect.top < containerRect.bottom && sectionRect.bottom > containerRect.top;
+        // Clamp the inset so the visible zone never inverts on small viewports
+        const containerHeight = containerRect.bottom - containerRect.top;
+        const inset = Math.min(this.options.edgeInset, containerHeight / 2);
+
+        // Check if the section is visible in the viewport, inset by the configured edge offset
+        // (its top is above the inset bottom and its bottom is below the inset top)
+        return (
+            sectionRect.top < containerRect.bottom - inset &&
+            sectionRect.bottom > containerRect.top + inset
+        );
     }
 
     /**

@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS: StompPluginSettings = {
 
     sectionScrollSettings: {
         scrollDuration: 0.5,
+        edgeInset: 0,
         stopAtH1: true,
         stopAtH2: true,
         stopAtHR: true,
