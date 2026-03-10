@@ -80,3 +80,27 @@ commits, tags with the format `obsidian-stomp-X.Y.Z`, and pushes.
 - Error handling at the controller level: strategies may throw, controller catches and shows `Notice` to the user
 - Prefer `document.querySelectorAll` + `compareDocumentPosition` for stable element ordering over offset-based approaches
 - When modifying settings interfaces, update `DEFAULT_SETTINGS` in main.ts to ensure backwards compatibility with existing user data
+
+## Commit Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>(<scope>): <description>
+```
+
+Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`, `perf`
+
+Scope is optional but encouraged (e.g. `fix(scroller): ...`, `feat(engine): ...`).
+
+Include the issue number when applicable (e.g. `feat: add section scroll (#8)`).
+
+## Branch Naming
+
+Use the same type prefixes as commits, followed by a short description:
+
+```
+<type>/<short-description>
+```
+
+Examples: `feat/section-scroll`, `fix/animation-timing`, `chore/update-deps`
