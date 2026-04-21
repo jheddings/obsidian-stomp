@@ -72,7 +72,7 @@ export default class StompPlugin extends Plugin {
             });
         });
 
-        this.registerDomEvent(document, "keydown", this.handleKeyDown, { capture: true });
+        this.registerDomEvent(activeDocument, "keydown", this.handleKeyDown, { capture: true });
 
         this.logger.info("Plugin loaded");
     }

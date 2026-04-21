@@ -57,7 +57,7 @@ export class ScrollEngine {
      */
     stopAnimation(): void {
         if (this.animationId !== null) {
-            window.clearTimeout(this.animationId);
+            activeWindow.clearTimeout(this.animationId);
             this.logger.debug(`Animation stopped [${this.animationId}]`);
             this.animationId = null;
         }
@@ -135,10 +135,10 @@ export class ScrollEngine {
                     return;
                 }
 
-                this.animationId = window.setTimeout(animate, frameInterval);
+                this.animationId = activeWindow.setTimeout(animate, frameInterval);
             };
 
-            this.animationId = window.setTimeout(animate, frameInterval);
+            this.animationId = activeWindow.setTimeout(animate, frameInterval);
         });
     }
 
