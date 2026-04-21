@@ -231,7 +231,7 @@ abstract class SectionScroller extends ViewScroller {
         for (const selector of this.stopSelectors) {
             const found = container.querySelectorAll(selector);
             found.forEach((el) => {
-                if (el instanceof HTMLElement) {
+                if (el.instanceOf(HTMLElement)) {
                     elements.push(el);
                 }
             });
@@ -314,7 +314,7 @@ abstract class SectionScroller extends ViewScroller {
         let sibling = block.nextElementSibling;
 
         while (sibling) {
-            if (sibling instanceof HTMLElement) {
+            if (sibling.instanceOf(HTMLElement)) {
                 // Stop if this sibling is or contains a section stop element
                 const current = sibling;
                 if (sections.some((s) => current.contains(s))) {

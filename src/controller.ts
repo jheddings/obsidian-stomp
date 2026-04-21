@@ -254,7 +254,7 @@ export class ScrollController {
      * Determines if an element is scrollable.
      */
     private isScrollable(element: HTMLElement): boolean {
-        const style = window.getComputedStyle(element);
+        const style = activeWindow.getComputedStyle(element);
         const hasScrollableContent = element.scrollHeight > element.clientHeight;
         const hasScrollableStyle = style.overflowY === "scroll" || style.overflowY === "auto";
         return hasScrollableContent && hasScrollableStyle;
