@@ -94,8 +94,14 @@ export class ScrollEngine {
         pixelsPerFrame: number,
         totalFrames: number
     ): Promise<void> {
+        if (!this.activeElement) {
+            throw new Error("No active element");
+        }
+
+        const element = this.activeElement;
+
         return new Promise((resolve) => {
-            let currentPosition = this.activeElement.scrollTop;
+            let currentPosition = element.scrollTop;
             let framesProcessed = 0;
 
             const startTime = performance.now();
@@ -110,7 +116,7 @@ export class ScrollEngine {
             };
 
             const animate = () => {
-                const previousPosition = this.activeElement.scrollTop;
+                const previousPosition = element.scrollTop;
                 const nextPosition = currentPosition + pixelsPerFrame;
 
                 this.logger.debug(
@@ -121,7 +127,7 @@ export class ScrollEngine {
                 this.directScroll(currentPosition);
 
                 // check if we've reached a document limit
-                const actualPosition = this.activeElement.scrollTop;
+                const actualPosition = element.scrollTop;
                 if (actualPosition === previousPosition) {
                     finalize(`Scroll stopped @ ${actualPosition}`);
                     return;
