@@ -3,11 +3,19 @@ import { defineConfig } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 
+// Disable all obsidianmd rules for non-TS files.  Several rules in the
+// plugin's recommended config call getParserServices() but are applied
+// globally (no files filter), which crashes on package.json and other
+// non-TypeScript files that lack type information.
+const obsidianmdOff = Object.fromEntries(
+    Object.keys(obsidianmd.rules ?? {}).map((name) => [`obsidianmd/${name}`, "off"])
+);
+
 export default defineConfig([
-    ...obsidianmd.configs.recommended,
     {
-        ignores: ["main.js", "dist/**", "node_modules/**", "*.d.ts"],
+        ignores: ["main.js", "dist/**", "node_modules/**", "*.d.ts", "*.mjs"],
     },
+    ...obsidianmd.configs.recommended,
     {
         files: ["**/*.ts", "**/*.tsx"],
         languageOptions: {
@@ -25,6 +33,7 @@ export default defineConfig([
     {
         files: ["package.json"],
         rules: {
+            ...obsidianmdOff,
             "depend/ban-dependencies": "off",
         },
     },

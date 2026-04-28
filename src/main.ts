@@ -53,9 +53,9 @@ const config = new PluginConfig<StompPluginSettings>({
 });
 
 export default class StompPlugin extends Plugin {
-    settings: StompPluginSettings;
+    settings!: StompPluginSettings;
 
-    private controller: ScrollController;
+    private controller!: ScrollController;
 
     private logger: Logger = Logger.getLogger("main");
 
@@ -124,6 +124,6 @@ export default class StompPlugin extends Plugin {
 
     hasActiveView(): boolean {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        return activeView && activeView.currentMode instanceof MarkdownPreviewView;
+        return activeView !== null && activeView.currentMode instanceof MarkdownPreviewView;
     }
 }
