@@ -563,7 +563,7 @@ class AdvancedSettingsTab extends SettingsTabPage {
 
         new Setting(containerEl).setName("Key capture test").setHeading();
 
-        const testArea = containerEl.createEl("div", {
+        const testArea = containerEl.createDiv({
             cls: "stomp-key-test-area",
         });
 
@@ -571,23 +571,23 @@ class AdvancedSettingsTab extends SettingsTabPage {
             text: "Press any key while focused in this area to see what key codes are being sent:",
         });
 
-        const keyDisplay = testArea.createEl("div", {
+        const keyDisplay = testArea.createDiv({
             cls: "stomp-key-display",
         });
 
-        const keyEl = keyDisplay.createEl("span", {
+        const keyEl = keyDisplay.createSpan({
             text: "Key: <waiting for key press>",
         });
 
         keyDisplay.createEl("br");
 
-        const codeEl = keyDisplay.createEl("span", {
+        const codeEl = keyDisplay.createSpan({
             text: "Code: <waiting for key press>",
         });
 
         keyDisplay.createEl("br");
 
-        const timestampEl = keyDisplay.createEl("span", {
+        const timestampEl = keyDisplay.createSpan({
             text: "Timestamp: <waiting for key press>",
         });
 
