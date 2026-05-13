@@ -1,6 +1,6 @@
 {
     "id": "stomp",
-    "name": "STOMP",
+    "name": "Stomp",
     "version": "0.7.1",
     "minAppVersion": "1.0.0",
     "description": "Integrated support for foot-pedals in Reading View.",
