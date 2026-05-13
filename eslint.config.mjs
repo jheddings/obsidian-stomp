@@ -13,7 +13,7 @@ const obsidianmdOff = Object.fromEntries(
 
 export default defineConfig([
     {
-        ignores: ["main.js", "dist/**", "node_modules/**", "*.d.ts", "*.mjs"],
+        ignores: ["main.js", "dist/**", "node_modules/**", "tmp/**", "**/*.d.ts", "**/*.mjs"],
     },
     ...obsidianmd.configs.recommended,
     {
