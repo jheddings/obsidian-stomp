@@ -2,6 +2,9 @@
 
 import { Logger } from "obskit";
 
+/**
+ * The direction a scroll moves the view.
+ */
 export enum ScrollDirection {
     UP = -1,
     DOWN = 1,
